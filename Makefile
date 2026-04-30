@@ -9,7 +9,8 @@ lint:
 	mypy src/
 
 test:
-	pytest	tests/
+	# Exit code 5 = no tests collected, acceptable during early development
+	pytest || [ $$? -eq 5 ]
 
 run:
 	uvicorn src.api.main:app --reload
