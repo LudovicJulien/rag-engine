@@ -64,13 +64,13 @@ semantic search with LLM-powered answers out of the box.
 ---
 
 ## Planned Features
-- [ ] Ingestion pipeline (CSV, JSON, custom adapters)
+- [ ] Ingestion pipeline (JSON)
 - [ ] Semantic chunking (naive, sentence-aware, NER-based)
 - [ ] Hybrid embeddings (dense + sparse BM25)
 - [ ] Vector store with metadata filtering (Qdrant)
 - [ ] Hybrid retrieval with RRF fusion + MMR
 - [ ] Cross-encoder re-ranking
-- [ ] LLM generation (Anthropic Claude)
+- [ ] LLM generation (Ollama gemma3:4b  )
 - [ ] Evaluation framework (RAGAS metrics)
 - [ ] FastAPI REST API
 - [ ] Docker + CI/CD
@@ -117,17 +117,44 @@ rag-engine/
 │   ├── EVALUATION.md
 │   ├── DEPLOYMENT.md
 │   └── adr/              # Architecture Decision Records
+├── .github/
+│   └── workflows/
+│       └── ci.ym
 ├── .env.example
-├── pyproject.toml
+├── .gitignore
+├── .pre-commit-config.yaml
+├── CONTRIBUTING.md
+├── LICENSE
 ├── Makefile
+├── pyproject.toml
 └── docker-compose.yml
 ```
 
 ---
 
-## Getting Started *(coming soon)*
+## Getting Started
 
-Installation, configuration, and usage instructions will be added as development progresses.
+>Installation, configuration, and usage instructions will be added as 
+development progresses.
+
+### Prerequisites
+- Python 3.11+
+- [Ollama](https://ollama.com) with `gemma3:4b` pulled locally
+
+### Installation
+
+```bash
+git clone https://github.com/ton-username/rag-engine.git
+cd rag-engine
+make install
+```
+
+### Environment
+
+```bash
+cp .env.example .env
+# Edit .env with your values
+```
 
 ---
 
