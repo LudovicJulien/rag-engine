@@ -7,7 +7,7 @@ packages = ["src"]
 
 [project]
 name = "rag-engine"
-version = "0.1.0"
+version = "0.2.0"
 description = "Modular Retrieval-Augmented Generation engine built for reusability"
 
 readme = "README.md"
@@ -22,9 +22,6 @@ dependencies = [
     # Embeddings
     "sentence-transformers>=3.0",
     "rank-bm25>=0.2",
-
-    # NLP
-    "spacy>=3.7",
 
     # Vector store
     "qdrant-client>=1.9",

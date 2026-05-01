@@ -24,12 +24,7 @@ semantic search with LLM-powered answers out of the box.
          │
          ▼
 ┌─────────────────┐
-│ Ingestion Layer │  JSON 
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Chunking      │  Naive / Sentence-aware / Semantic (spaCy NER)
+│ Ingestion Layer │  Pre-chunked JSON 
 └────────┬────────┘
          │
          ▼
@@ -64,8 +59,8 @@ semantic search with LLM-powered answers out of the box.
 ---
 
 ## Planned Features
-- [ ] Ingestion pipeline (JSON)
-- [ ] Semantic chunking (naive, sentence-aware, NER-based)
+
+- [ ] Ingestion pipeline (pre-chunked JSON)
 - [ ] Hybrid embeddings (dense + sparse BM25)
 - [ ] Vector store with metadata filtering (Qdrant)
 - [ ] Hybrid retrieval with RRF fusion + MMR
@@ -86,7 +81,6 @@ semantic search with LLM-powered answers out of the box.
 | Embeddings    | SentenceTransformers, BM25 |
 | Vector Store  | Qdrant                     |
 | LLM           | gemma3:4b                  |
-| NLP           | spaCy                      |
 | API           | FastAPI                    |
 | Evaluation    | RAGAS, MLflow              |
 | Observability | Langfuse                   |
@@ -100,7 +94,6 @@ semantic search with LLM-powered answers out of the box.
 ```
 rag-engine/
 ├── src/
-│   ├── chunking/         # Chunking strategies
 │   ├── embeddings/       # Embedding models
 │   ├── evaluation/       # RAGAS metrics and runner
 │   ├── generation/       # LLM generators

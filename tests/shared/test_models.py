@@ -1,11 +1,11 @@
-# tests/chunking/test_models.py
+# tests/shared/test_models.py
 from __future__ import annotations
 
 from typing import Any
 
 import pytest
 
-from src.chunking.models import Chunk, ChunkMetadata
+from src.shared.models import Chunk, ChunkMetadata
 
 
 def _make_chunk(**kwargs: Any) -> Chunk:
