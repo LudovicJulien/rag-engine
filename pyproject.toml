@@ -7,7 +7,7 @@ packages = ["src"]
 
 [project]
 name = "rag-engine"
-version = "0.1.0"
+version = "0.2.0"
 description = "Modular Retrieval-Augmented Generation engine built for reusability"
 
 readme = "README.md"
