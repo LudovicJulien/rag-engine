@@ -23,9 +23,6 @@ dependencies = [
     "sentence-transformers>=3.0",
     "rank-bm25>=0.2",
 
-    # NLP
-    "spacy>=3.7",
-
     # Vector store
     "qdrant-client>=1.9",
 
