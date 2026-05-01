@@ -1,8 +1,10 @@
 # tests/ingestion/test_models.py
 from __future__ import annotations
 
-import pytest
 from datetime import datetime
+
+import pytest
+
 from src.ingestion.models import Document
 
 

@@ -29,16 +29,16 @@ class Settings(BaseSettings):
 
     # ── Qdrant ────────────────────────────────────────────────────────────────
     qdrant_host: str = Field(
-            default="localhost",
-            description="Qdrant server hostname",
+        default="localhost",
+        description="Qdrant server hostname",
     )
     qdrant_port: int = Field(
-            default=6333,
-            description="Qdrant server port",
+        default=6333,
+        description="Qdrant server port",
     )
     collection_name: str = Field(
-            default="rag-collection",
-            description="Qdrant collection name",
+        default="rag-collection",
+        description="Qdrant collection name",
     )
 
     # ── Embedding ─────────────────────────────────────────────────────────────
@@ -47,32 +47,22 @@ class Settings(BaseSettings):
         description="Embedding model identifier",
     )
     embedding_batch_size: int = Field(
-        default=32,
-        description="Embedding inference batch size"
+        default=32, description="Embedding inference batch size"
     )
 
     # ── Chunking ──────────────────────────────────────────────────────────────
-    chunk_size: int = Field(
-            default=512,
-            description="Maximum chunk size"
-    )
-    chunk_overlap: int = Field(
-        default=64, description="Chunk overlap size"
-    )
+    chunk_size: int = Field(default=512, description="Maximum chunk size")
+    chunk_overlap: int = Field(default=64, description="Chunk overlap size")
 
     # ── LLM ───────────────────────────────────────────────────────────────────
-    llm_provider: str = Field(
-        default="ollama", description="LLM provider identifier"
-    )
+    llm_provider: str = Field(default="ollama", description="LLM provider identifier")
     llm_base_url: str = Field(
         default="http://localhost:11434", description="Base URL for provider API"
     )
     llm_model: str = Field(
         default="gemma3:4b", description="Model name used by the selected provider"
     )
-    llm_api_key: str = Field(
-        default="", description="API key for remote providers"
-    )
+    llm_api_key: str = Field(default="", description="API key for remote providers")
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     top_k: int = Field(
@@ -144,9 +134,7 @@ class Settings(BaseSettings):
         allowed = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         normalized = value.upper()
         if normalized not in allowed:
-            raise ValueError(
-                    f"log_level must be one of {allowed}, got '{value}'"
-            )
+            raise ValueError(f"log_level must be one of {allowed}, got '{value}'")
         return normalized
 
     @field_validator("top_k")
@@ -162,6 +150,7 @@ class Settings(BaseSettings):
         if not (0.0 <= v <= 1.0):
             raise ValueError(f"score_threshold must be between 0.0 and 1.0, got {v}")
         return v
+
 
 # Singleton instance
 settings = Settings()

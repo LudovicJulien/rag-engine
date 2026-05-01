@@ -19,8 +19,8 @@ class TestLanguageEnum:
 
     def test_language_is_string(self) -> None:
         """Language inherits from str — direct string comparison works."""
-        assert Language.FR == "fr"
-        assert Language.EN == "en"
+        assert Language.FR.value == "fr"
+        assert Language.EN.value == "en"
 
     def test_language_in_string_context(self) -> None:
         """Language can be used directly where a string is expected."""

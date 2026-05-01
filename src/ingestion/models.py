@@ -10,21 +10,19 @@ from typing import Any
 class Document:
     """Represents a raw document before chunking.
 
-        Attributes:
-            id: Unique identifier for the document.
-            content: Raw text content of the document.
-            source: Origin of the document (file path, URL, API name, etc.).
-            metadata: Arbitrary key-value pairs for domain-specific information.
-            ingested_at: Timestamp of when the document was ingested.
+    Attributes:
+        id: Unique identifier for the document.
+        content: Raw text content of the document.
+        source: Origin of the document (file path, URL, API name, etc.).
+        metadata: Arbitrary key-value pairs for domain-specific information.
+        ingested_at: Timestamp of when the document was ingested.
     """
 
     id: str
     content: str
     source: str
     metadata: dict[str, Any] = field(default_factory=dict)
-    ingested_at: datetime = field(
-            default_factory=lambda: datetime.now(UTC)
-    )
+    ingested_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self) -> None:
         if not self.id:

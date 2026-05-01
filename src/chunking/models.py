@@ -9,9 +9,9 @@ from typing import Any
 class ChunkMetadata:
     """Domain-agnostic metadata container for a chunk.
 
-        Attributes:
-            metadata: Arbitrary key-value pairs inherited from the parent document
-                      plus any chunk-level annotations added during processing.
+    Attributes:
+        metadata: Arbitrary key-value pairs inherited from the parent document
+                  plus any chunk-level annotations added during processing.
     """
 
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -25,14 +25,14 @@ class ChunkMetadata:
 class Chunk:
     """Represents a text chunk derived from a parent Document.
 
-        Attributes:
-            chunk_id: Unique identifier for this chunk.
-            parent_doc_id: ID of the Document this chunk was derived from.
-            text: The actual text content of this chunk.
-            chunk_index: Position of this chunk within the parent document (0-based).
-            total_chunks: Total number of chunks derived from the parent document.
-            embedding: Dense vector representation of the chunk text.
-            metadata: Domain-agnostic metadata inherited from parent + chunk-level info.
+    Attributes:
+        chunk_id: Unique identifier for this chunk.
+        parent_doc_id: ID of the Document this chunk was derived from.
+        text: The actual text content of this chunk.
+        chunk_index: Position of this chunk within the parent document (0-based).
+        total_chunks: Total number of chunks derived from the parent document.
+        embedding: Dense vector representation of the chunk text.
+        metadata: Domain-agnostic metadata inherited from parent + chunk-level info.
     """
 
     chunk_id: str
