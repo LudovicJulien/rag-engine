@@ -45,7 +45,8 @@ class TestChunkMetadataCreation:
 class TestChunkCreation:
     """Tests for valid Chunk instantiation."""
 
-    def _make_chunk(self, **kwargs) -> Chunk:  # type: ignore
+    @staticmethod
+    def _make_chunk(**kwargs) -> Chunk:  # type: ignore
         """Helper to create a valid Chunk with sensible defaults."""
         defaults = {
             "chunk_id": "chunk-001",
@@ -93,7 +94,8 @@ class TestChunkCreation:
 class TestChunkValidation:
     """Tests for Chunk validation in __post_init__."""
 
-    def _make_chunk(self, **kwargs) -> Chunk:  # type: ignore
+    @staticmethod
+    def _make_chunk(**kwargs) -> Chunk:  # type: ignore
         defaults = {
             "chunk_id": "chunk-001",
             "parent_doc_id": "doc-001",
@@ -136,7 +138,8 @@ class TestChunkValidation:
 class TestChunkProperties:
     """Tests for Chunk computed properties."""
 
-    def _make_chunk(self, **kwargs) -> Chunk:  # type: ignore
+    @staticmethod
+    def _make_chunk(**kwargs) -> Chunk:  # type: ignore
         defaults = {
             "chunk_id": "chunk-001",
             "parent_doc_id": "doc-001",
