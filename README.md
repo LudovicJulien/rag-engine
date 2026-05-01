@@ -2,6 +2,7 @@
 
 > Modular RAG engine — plug in any data source, get semantic search out of the box.
 
+![Version](https://img.shields.io/badge/version-0.2.0-brightgreen)
 ![Status](https://img.shields.io/badge/status-in%20development-orange)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![Python](https://img.shields.io/badge/python-3.11+-green)
