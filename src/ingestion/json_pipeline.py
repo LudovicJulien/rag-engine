@@ -47,7 +47,7 @@ class JSONChunkIngestionPipeline(DataIngestionPipeline):
         if not path.exists():
             raise FileNotFoundError(f"Source file not found: {path}")
 
-        if not path.suffix == ".json":
+        if path.suffix != ".json":
             raise ValueError(f"Expected a .json file, got: {path.suffix}")
 
         with path.open("r", encoding="utf-8") as f:
