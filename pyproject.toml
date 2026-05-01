@@ -52,6 +52,7 @@ dev = [
     "mypy>=1.10",
     "pre-commit>=3.7",
     "coverage>=7.0",
+    "pydantic[mypy]>=2.0",
 ]
 
 [tool.black]

@@ -100,15 +100,16 @@ semantic search with LLM-powered answers out of the box.
 ```
 rag-engine/
 ├── src/
-│   ├── ingestion/        # Data ingestion adapters
 │   ├── chunking/         # Chunking strategies
 │   ├── embeddings/       # Embedding models
-│   ├── vector_store/     # Qdrant client wrapper
-│   ├── retrieval/        # Retrieval strategies
-│   ├── reranking/        # Re-ranking models
+│   ├── evaluation/       # RAGAS metrics and runner
 │   ├── generation/       # LLM generators
+│   ├── ingestion/        # Data ingestion adapters
 │   ├── pipeline/         # RAGPipeline and RAGQuery
-│   └── evaluation/       # RAGAS metrics and runner
+│   ├── reranking/        # Re-ranking models
+│   ├── retrieval/        # Retrieval strategies
+│   ├── shared/           # Shared enums, types, and utilities
+│   └── vector_store/     # Qdrant client wrapper 
 ├── tests/
 ├── demo_data/            # Sample documents for local dev
 ├── golden_dataset/       # Q/A pairs for evaluation

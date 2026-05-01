@@ -6,11 +6,10 @@ lint:
 	black --check .
 	isort --check .
 	flake8 .
-	mypy src/
+	mypy src/ tests/
 
 test:
-	# Exit code 5 = no tests collected, acceptable during early development
-	pytest || [ $$? -eq 5 ]
+	pytest
 
 run:
 	uvicorn src.api.main:app --reload
