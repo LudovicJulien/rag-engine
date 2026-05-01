@@ -1,0 +1,35 @@
+[
+  {
+    "chunk_id": "chunk-001",
+    "parent_doc_id": "doc-001",
+    "text": "Le Plateau-Mont-Royal est un quartier branché de Montréal, reconnu pour ses cafés indépendants et sa vie culturelle animée.",
+    "chunk_index": 0,
+    "total_chunks": 2,
+    "metadata": {
+      "language": "fr",
+      "source": "demo"
+    }
+  },
+  {
+    "chunk_id": "chunk-002",
+    "parent_doc_id": "doc-001",
+    "text": "On y trouve de nombreuses galeries d'art, des restaurants branchés et des boutiques uniques sur l'avenue Mont-Royal.",
+    "chunk_index": 1,
+    "total_chunks": 2,
+    "metadata": {
+      "language": "fr",
+      "source": "demo"
+    }
+  },
+  {
+    "chunk_id": "chunk-003",
+    "parent_doc_id": "doc-002",
+    "text": "Rosemont is a diverse neighbourhood in Montreal known for its parks, local businesses, and strong community spirit.",
+    "chunk_index": 0,
+    "total_chunks": 1,
+    "metadata": {
+      "language": "en",
+      "source": "demo"
+    }
+  }
+]
