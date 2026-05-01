@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -22,7 +22,9 @@ class Document:
     content: str
     source: str
     metadata: dict[str, Any] = field(default_factory=dict)
-    ingested_at: datetime = field(default_factory=datetime.utcnow)
+    ingested_at: datetime = field(
+            default_factory=lambda: datetime.now(UTC)
+    )
 
     def __post_init__(self) -> None:
         if not self.id:
