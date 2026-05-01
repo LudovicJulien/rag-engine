@@ -6,7 +6,7 @@ lint:
 	black --check .
 	isort --check .
 	flake8 .
-	mypy src/
+	mypy src/ tests/
 
 test:
 	pytest
