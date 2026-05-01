@@ -186,3 +186,23 @@ class TestJSONChunkIngestionPipelineParseChunk:
         assert chunk.chunk_id == "chunk-001"
         assert chunk.text == "Hello world"
         assert chunk.embedding == []
+
+
+class TestJSONChunkIngestionPipelineIntegration:
+    """Integration tests using real demo_data files."""
+
+    DEMO_DATA_PATH = (
+        Path(__file__).parent.parent.parent / "demo_data" / "sample_chunks.json"
+    )
+
+    def test_ingest_demo_data(self) -> None:
+        pipeline = JSONChunkIngestionPipeline()
+        chunks = pipeline.ingest(self.DEMO_DATA_PATH)
+        assert len(chunks) > 0
+        assert all(isinstance(c, Chunk) for c in chunks)
+        assert all(c.text != "" for c in chunks)
+
+    def test_ingest_demo_data_no_embeddings(self) -> None:
+        pipeline = JSONChunkIngestionPipeline()
+        chunks = pipeline.ingest(self.DEMO_DATA_PATH)
+        assert all(not c.is_embedded for c in chunks)
