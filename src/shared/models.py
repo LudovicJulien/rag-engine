@@ -1,4 +1,4 @@
-# src/chunking/models.py
+# src/shared/models.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
