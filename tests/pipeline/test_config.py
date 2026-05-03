@@ -28,12 +28,6 @@ class TestSettingsTypes:
     def test_embedding_batch_size_is_int(self) -> None:
         assert isinstance(Settings().embedding_batch_size, int)
 
-    def test_chunk_size_is_int(self) -> None:
-        assert isinstance(Settings().chunk_size, int)
-
-    def test_chunk_overlap_is_int(self) -> None:
-        assert isinstance(Settings().chunk_overlap, int)
-
     def test_llm_provider_is_string(self) -> None:
         assert isinstance(Settings().llm_provider, str)
 
@@ -65,17 +59,20 @@ class TestSettingsInvariants:
     def test_embedding_batch_size_is_positive(self) -> None:
         assert Settings().embedding_batch_size >= 1
 
-    def test_chunk_size_is_positive(self) -> None:
-        assert Settings().chunk_size >= 1
-
-    def test_chunk_overlap_is_non_negative(self) -> None:
-        assert Settings().chunk_overlap >= 0
-
     def test_top_k_is_positive(self) -> None:
         assert Settings().top_k >= 1
 
     def test_score_threshold_is_between_zero_and_one(self) -> None:
         assert 0.0 <= Settings().score_threshold <= 1.0
+
+    def test_llm_provider_is_allowed_value(self) -> None:
+        assert Settings().llm_provider in {
+            "ollama",
+            "huggingface",
+            "openai",
+            "anthropic",
+            "gemini",
+        }
 
     def test_qdrant_host_is_not_empty(self) -> None:
         assert Settings().qdrant_host.strip() != ""
@@ -95,6 +92,15 @@ class TestSettingsInvariants:
     def test_log_level_is_not_empty(self) -> None:
         assert Settings().log_level.strip() != ""
 
+    def test_log_level_is_allowed_value(self) -> None:
+        assert Settings().log_level in {
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+        }
+
 
 class TestSettingsFromEnv:
     """Tests environment variable overrides."""
@@ -104,7 +110,6 @@ class TestSettingsFromEnv:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("QDRANT_HOST", "custom-host")
-
         assert Settings().qdrant_host == "custom-host"
 
     def test_qdrant_port_from_env(
@@ -112,7 +117,6 @@ class TestSettingsFromEnv:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("QDRANT_PORT", "6334")
-
         assert Settings().qdrant_port == 6334
 
     def test_top_k_from_env(
@@ -120,7 +124,6 @@ class TestSettingsFromEnv:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("TOP_K", "10")
-
         assert Settings().top_k == 10
 
     def test_score_threshold_from_env(
@@ -128,7 +131,6 @@ class TestSettingsFromEnv:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("SCORE_THRESHOLD", "0.85")
-
         assert Settings().score_threshold == pytest.approx(0.85)
 
     def test_llm_provider_from_env(
@@ -136,23 +138,34 @@ class TestSettingsFromEnv:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("LLM_PROVIDER", "anthropic")
-
         assert Settings().llm_provider == "anthropic"
+
+    def test_llm_base_url_from_env(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("LLM_BASE_URL", "https://api.openai.com/v1")
+        assert Settings().llm_base_url == "https://api.openai.com/v1"
 
     def test_llm_model_from_env(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        monkeypatch.setenv("LLM_MODEL", "claude-3-sonnet")
+        monkeypatch.setenv("LLM_MODEL", "claude-sonnet-4-20250514")
+        assert Settings().llm_model == "claude-sonnet-4-20250514"
 
-        assert Settings().llm_model == "claude-3-sonnet"
+    def test_llm_api_key_from_env(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("LLM_API_KEY", "sk-test-key")
+        assert Settings().llm_api_key == "sk-test-key"
 
     def test_log_level_from_env(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("LOG_LEVEL", "DEBUG")
-
         assert Settings().log_level == "DEBUG"
 
     def test_env_overrides_default(
@@ -160,9 +173,7 @@ class TestSettingsFromEnv:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         original = Settings().top_k
-
         monkeypatch.setenv("TOP_K", str(original + 1))
-
         assert Settings().top_k == original + 1
 
 
@@ -174,7 +185,6 @@ class TestSettingsValidation:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("QDRANT_PORT", "0")
-
         with pytest.raises(ValidationError):
             Settings()
 
@@ -183,7 +193,6 @@ class TestSettingsValidation:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("QDRANT_PORT", "99999")
-
         with pytest.raises(ValidationError):
             Settings()
 
@@ -192,7 +201,14 @@ class TestSettingsValidation:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("QDRANT_PORT", "-1")
+        with pytest.raises(ValidationError):
+            Settings()
 
+    def test_invalid_llm_provider(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("LLM_PROVIDER", "unknown_provider")
         with pytest.raises(ValidationError):
             Settings()
 
@@ -201,7 +217,6 @@ class TestSettingsValidation:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("LOG_LEVEL", "VERBOSE")
-
         with pytest.raises(ValidationError):
             Settings()
 
@@ -210,7 +225,6 @@ class TestSettingsValidation:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("TOP_K", "0")
-
         with pytest.raises(ValidationError):
             Settings()
 
@@ -219,7 +233,6 @@ class TestSettingsValidation:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("TOP_K", "-1")
-
         with pytest.raises(ValidationError):
             Settings()
 
@@ -228,7 +241,6 @@ class TestSettingsValidation:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("SCORE_THRESHOLD", "1.5")
-
         with pytest.raises(ValidationError):
             Settings()
 
@@ -237,25 +249,6 @@ class TestSettingsValidation:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("SCORE_THRESHOLD", "-0.1")
-
-        with pytest.raises(ValidationError):
-            Settings()
-
-    def test_invalid_chunk_size_zero(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        monkeypatch.setenv("CHUNK_SIZE", "0")
-
-        with pytest.raises(ValidationError):
-            Settings()
-
-    def test_invalid_chunk_overlap_negative(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        monkeypatch.setenv("CHUNK_OVERLAP", "-1")
-
         with pytest.raises(ValidationError):
             Settings()
 
@@ -264,7 +257,6 @@ class TestSettingsValidation:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("EMBEDDING_BATCH_SIZE", "0")
-
         with pytest.raises(ValidationError):
             Settings()
 
@@ -273,7 +265,6 @@ class TestSettingsValidation:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("LLM_PROVIDER", "   ")
-
         with pytest.raises(ValidationError):
             Settings()
 
@@ -282,7 +273,6 @@ class TestSettingsValidation:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("EMBEDDING_MODEL", "")
-
         with pytest.raises(ValidationError):
             Settings()
 
@@ -295,7 +285,6 @@ class TestSettingsNormalization:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("LOG_LEVEL", "debug")
-
         assert Settings().log_level == "DEBUG"
 
     def test_log_level_mixed_case_normalized(
@@ -303,7 +292,6 @@ class TestSettingsNormalization:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("LOG_LEVEL", "Warning")
-
         assert Settings().log_level == "WARNING"
 
     def test_llm_provider_uppercase_normalized_to_lowercase(
@@ -311,7 +299,6 @@ class TestSettingsNormalization:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("LLM_PROVIDER", "OLLAMA")
-
         assert Settings().llm_provider == "ollama"
 
     def test_llm_provider_mixed_case_normalized(
@@ -319,7 +306,6 @@ class TestSettingsNormalization:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("LLM_PROVIDER", "Anthropic")
-
         assert Settings().llm_provider == "anthropic"
 
 
@@ -331,16 +317,22 @@ class TestSettingsSingleton:
 
     def test_singleton_respects_invariants(self) -> None:
         s = config_module.settings
-
         assert 1 <= s.qdrant_port <= 65535
         assert s.top_k >= 1
         assert 0.0 <= s.score_threshold <= 1.0
-        assert s.llm_provider.strip() != ""
+        assert s.llm_provider in {
+            "ollama",
+            "huggingface",
+            "openai",
+            "anthropic",
+            "gemini",
+        }
         assert s.log_level in {
             "DEBUG",
             "INFO",
             "WARNING",
             "ERROR",
+            "CRITICAL",
         }
 
     def test_singleton_reloads_with_new_env(
@@ -348,9 +340,7 @@ class TestSettingsSingleton:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("TOP_K", "15")
-
         importlib.reload(config_module)
-
         assert config_module.settings.top_k == 15
 
     def test_singleton_import_works(self) -> None:
