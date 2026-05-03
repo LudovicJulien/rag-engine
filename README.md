@@ -165,6 +165,14 @@ cp .env.example .env
 
 ---
 
+## Testing
+
+Tests mirror the `src/` hierarchy under `tests/`. Conventions cover class grouping, naming, mocking boundaries, and the separation of unit from integration tests.
+
+See [docs/testing.md](docs/testing.md) for the full guide.
+
+---
+
 ## Design Decisions *(coming soon)*
 
 A dedicated section covering key architectural choices — embedding strategy, chunking approach, retrieval fusion — will be added once the implementation is complete, backed by benchmark results.
