@@ -39,3 +39,8 @@ qdrant_storage/
 # Logs
 *.log
 logs/
+
+# AI tooling
+claude.md
+.ai/
+.prompts/
