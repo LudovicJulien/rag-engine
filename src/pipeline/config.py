@@ -47,22 +47,27 @@ class Settings(BaseSettings):
         description="Embedding model identifier",
     )
     embedding_batch_size: int = Field(
-        default=32, description="Embedding inference batch size"
+        default=32,
+        description="Embedding inference batch size",
     )
-
-    # ── Chunking ──────────────────────────────────────────────────────────────
-    chunk_size: int = Field(default=512, description="Maximum chunk size")
-    chunk_overlap: int = Field(default=64, description="Chunk overlap size")
 
     # ── LLM ───────────────────────────────────────────────────────────────────
-    llm_provider: str = Field(default="ollama", description="LLM provider identifier")
+    llm_provider: str = Field(
+        default="ollama",
+        description="LLM provider: ollama, huggingface, openai, anthropic, gemini",
+    )
     llm_base_url: str = Field(
-        default="http://localhost:11434", description="Base URL for provider API"
+        default="http://localhost:11434",
+        description="Base URL for the LLM provider API",
     )
     llm_model: str = Field(
-        default="gemma3:4b", description="Model name used by the selected provider"
+        default="gemma3:4b",
+        description="Model name for the selected provider",
     )
-    llm_api_key: str = Field(default="", description="API key for remote providers")
+    llm_api_key: str = Field(
+        default="",
+        description="API key for remote providers (empty for local providers)",
+    )
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     top_k: int = Field(
@@ -74,9 +79,10 @@ class Settings(BaseSettings):
         description="Minimum similarity threshold",
     )
 
-    # ── Logging ───────────────────────────────────────────────────────────────────
+    # ── Logging ───────────────────────────────────────────────────────────────
     log_level: str = Field(
-        default="INFO", description="Logging level: DEBUG, INFO, WARNING, ERROR"
+        default="INFO",
+        description="Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL",
     )
 
     # ── Validators ────────────────────────────────────────────────────────────
@@ -84,9 +90,7 @@ class Settings(BaseSettings):
         "qdrant_host",
         "collection_name",
         "embedding_model",
-        "llm_provider",
         "llm_model",
-        "log_level",
     )
     @classmethod
     def validate_non_empty_string(cls, value: str) -> str:
@@ -109,24 +113,14 @@ class Settings(BaseSettings):
             raise ValueError(f"embedding_batch_size must be >= 1, got {v}")
         return v
 
-    @field_validator("chunk_size")
-    @classmethod
-    def validate_chunk_size(cls, v: int) -> int:
-        if v < 1:
-            raise ValueError(f"chunk_size must be >= 1, got {v}")
-        return v
-
-    @field_validator("chunk_overlap")
-    @classmethod
-    def validate_chunk_overlap(cls, v: int) -> int:
-        if v < 0:
-            raise ValueError(f"chunk_overlap must be >= 0, got {v}")
-        return v
-
     @field_validator("llm_provider")
     @classmethod
     def normalize_llm_provider(cls, value: str) -> str:
-        return value.lower().strip()
+        allowed = {"ollama", "huggingface", "openai", "anthropic", "gemini"}
+        normalized = value.lower().strip()
+        if normalized not in allowed:
+            raise ValueError(f"llm_provider must be one of {allowed}, got '{value}'")
+        return normalized
 
     @field_validator("log_level")
     @classmethod

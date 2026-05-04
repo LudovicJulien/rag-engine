@@ -2,6 +2,7 @@
 
 > Modular RAG engine — plug in any data source, get semantic search out of the box.
 
+![Version](https://img.shields.io/badge/version-0.2.0-brightgreen)
 ![Status](https://img.shields.io/badge/status-in%20development-orange)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![Python](https://img.shields.io/badge/python-3.11+-green)
@@ -60,8 +61,8 @@ semantic search with LLM-powered answers out of the box.
 
 ## Planned Features
 
-- [ ] Ingestion pipeline (pre-chunked JSON)
-- [ ] Hybrid embeddings (dense + sparse BM25)
+- [x] Ingestion pipeline (pre-chunked JSON)
+- [x] Hybrid embeddings (dense + sparse BM25)
 - [ ] Vector store with metadata filtering (Qdrant)
 - [ ] Hybrid retrieval with RRF fusion + MMR
 - [ ] Cross-encoder re-ranking
@@ -134,6 +135,18 @@ development progresses.
 ### Prerequisites
 - Python 3.11+
 - [Ollama](https://ollama.com) with `gemma3:4b` pulled locally
+- **Windows only**: [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) 
+  required for some dependencies (select "Desktop development with C++")
+
+### LLM Provider (choose one)
+
+| Provider                | `LLM_PROVIDER` | `LLM_BASE_URL`                              | `LLM_API_KEY` |
+|-------------------------|----------------|---------------------------------------------|---------------|
+| **Ollama** (local)      | `ollama`       | `http://localhost:11434`                    | *(empty)*     |
+| **HuggingFace** (local) | `huggingface`  | `https://api-inference.huggingface.co`      | HF token      |
+| **OpenAI**              | `openai`       | `https://api.openai.com/v1`                 | OpenAI key    |
+| **Anthropic**           | `anthropic`    | `https://api.anthropic.com`                 | Anthropic key |
+| **Gemini**              | `gemini`       | `https://generativelanguage.googleapis.com` | Google key    |
 
 ### Installation
 
@@ -149,6 +162,14 @@ make install
 cp .env.example .env
 # Edit .env with your values
 ```
+
+---
+
+## Testing
+
+Tests mirror the `src/` hierarchy under `tests/`. Conventions cover class grouping, naming, mocking boundaries, and the separation of unit from integration tests.
+
+See [docs/testing.md](docs/testing.md) for the full guide.
 
 ---
 
