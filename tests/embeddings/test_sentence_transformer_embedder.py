@@ -149,7 +149,7 @@ class TestSentenceTransformerEmbedderEmbedQuery:
         assert call_args.startswith("query: ")
 
     def test_embed_query_no_prefix_for_other_models(self) -> None:
-        """Non-e5 models should not have query prefix added."""
+        """Non-e5 models receive no query prefix — prefix is model-specific to e5."""
         with patch(
             "src.embeddings.sentence_transformer_embedder.SentenceTransformer"
         ) as mock_cls:
@@ -181,7 +181,6 @@ class TestSentenceTransformerEmbedderCacheKey:
         assert mock_embedder.get_cache_key() == mock_embedder.get_cache_key()
 
     def test_different_models_have_different_cache_keys(self) -> None:
-        """Different models must have different cache keys."""
         with patch(
             "src.embeddings.sentence_transformer_embedder.SentenceTransformer"
         ) as mock_cls:

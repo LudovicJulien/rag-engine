@@ -75,7 +75,6 @@ class TestBM25SparseEmbedderFit:
         assert result is embedder
 
     def test_fit_method_chaining(self) -> None:
-        """fit().embed_text() works in one chain."""
         result = BM25SparseEmbedder().fit(["hello world"]).embed_text("hello")
         assert isinstance(result, list)
 
@@ -113,7 +112,6 @@ class TestBM25SparseEmbedderEmbedText:
     def test_embed_text_sparse_most_values_are_zero(
         self, fitted_embedder: BM25SparseEmbedder
     ) -> None:
-        """BM25 vectors are sparse — most values should be zero."""
         result = fitted_embedder.embed_text("Plateau")
         non_zero = sum(1 for v in result if v != 0.0)
         assert non_zero < len(result)
@@ -121,14 +119,12 @@ class TestBM25SparseEmbedderEmbedText:
     def test_embed_text_known_term_has_nonzero_score(
         self, fitted_embedder: BM25SparseEmbedder
     ) -> None:
-        """A term from the corpus must have a non-zero BM25 score."""
         result = fitted_embedder.embed_text("Plateau")
         assert any(v > 0.0 for v in result)
 
     def test_embed_text_unknown_term_all_zeros(
         self, fitted_embedder: BM25SparseEmbedder
     ) -> None:
-        """A term not in vocabulary produces an all-zero vector."""
         result = fitted_embedder.embed_text("xyzunknownterm")
         assert all(v == 0.0 for v in result)
 
@@ -144,7 +140,8 @@ class TestBM25SparseEmbedderEmbedText:
     def test_embed_text_rare_term_higher_score_than_common_term(
         self, fitted_embedder: BM25SparseEmbedder
     ) -> None:
-        """Rare terms should have higher IDF and thus higher BM25 scores."""
+        """Rare terms have higher IDF
+        BM25 assigns them larger scores than frequent terms."""
         vocab = fitted_embedder._vocabulary
 
         rare_term = "branché"
@@ -162,7 +159,7 @@ class TestBM25SparseEmbedderEmbedText:
         assert rare_score > common_score
 
     def test_embed_text_higher_tf_higher_score(self) -> None:
-        """More occurrences of a term should yield a higher BM25 score."""
+        """Higher term frequency yields a higher BM25 score."""
         embedder = BM25SparseEmbedder()
         embedder.fit(["hello world foo bar baz"])
 
@@ -210,7 +207,6 @@ class TestBM25SparseEmbedderEmbedBatch:
     def test_embed_batch_single_item_matches_embed_text(
         self, fitted_embedder: BM25SparseEmbedder
     ) -> None:
-        """embed_batch with one item must equal embed_text."""
         single = fitted_embedder.embed_text("Plateau")
         batch = fitted_embedder.embed_batch(["Plateau"])
         assert batch[0] == single

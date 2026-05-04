@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 
 from src.embeddings.bm25_embedder import BM25SparseEmbedder
@@ -188,8 +189,6 @@ class TestHybridEmbedderEmbedText:
         hybrid_embedder: HybridEmbedder,
         mock_dense: SentenceTransformerEmbedder,
     ) -> None:
-        import numpy as np
-
         mock_dense._model.encode.return_value = np.array(  # type: ignore[attr-defined]
             [0.1, 0.2, 0.3, 0.4]
         )
@@ -201,8 +200,6 @@ class TestHybridEmbedderEmbedText:
         hybrid_embedder: HybridEmbedder,
         mock_dense: SentenceTransformerEmbedder,
     ) -> None:
-        import numpy as np
-
         mock_dense._model.encode.return_value = np.array(  # type: ignore[attr-defined]
             [0.1, 0.2, 0.3, 0.4]
         )
@@ -214,8 +211,6 @@ class TestHybridEmbedderEmbedText:
         hybrid_embedder: HybridEmbedder,
         mock_dense: SentenceTransformerEmbedder,
     ) -> None:
-        import numpy as np
-
         mock_dense._model.encode.return_value = np.array(  # type: ignore[attr-defined]
             [0.1, 0.2, 0.3, 0.4]
         )
@@ -227,8 +222,6 @@ class TestHybridEmbedderEmbedText:
         hybrid_embedder: HybridEmbedder,
         mock_dense: SentenceTransformerEmbedder,
     ) -> None:
-        import numpy as np
-
         mock_dense._model.encode.return_value = np.array(  # type: ignore[attr-defined]
             [0.1, 0.2, 0.3, 0.4]
         )
@@ -247,9 +240,6 @@ class TestHybridEmbedderEmbedText:
         hybrid_embedder: HybridEmbedder,
         mock_dense: SentenceTransformerEmbedder,
     ) -> None:
-        """Unknown term produces empty sparse vector."""
-        import numpy as np
-
         mock_dense._model.encode.return_value = np.array(  # type: ignore[attr-defined]
             [0.1, 0.2, 0.3, 0.4]
         )
@@ -265,8 +255,6 @@ class TestHybridEmbedderEmbedQuery:
         hybrid_embedder: HybridEmbedder,
         mock_dense: SentenceTransformerEmbedder,
     ) -> None:
-        import numpy as np
-
         mock_dense._model.encode.return_value = np.array(  # type: ignore[attr-defined]
             [0.1, 0.2, 0.3, 0.4]
         )
@@ -286,8 +274,6 @@ class TestHybridEmbedderEmbedQuery:
         mock_dense: SentenceTransformerEmbedder,
     ) -> None:
         """embed_query uses embed_query() on dense — adds e5 prefix."""
-        import numpy as np
-
         mock_dense._model.encode.return_value = np.array(  # type: ignore[attr-defined]
             [0.1, 0.2, 0.3, 0.4]
         )
@@ -305,8 +291,6 @@ class TestHybridEmbedderEmbedBatch:
         hybrid_embedder: HybridEmbedder,
         mock_dense: SentenceTransformerEmbedder,
     ) -> None:
-        import numpy as np
-
         mock_dense._model.encode.return_value = np.array(  # type: ignore[attr-defined]
             [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]
         )
@@ -319,8 +303,6 @@ class TestHybridEmbedderEmbedBatch:
         hybrid_embedder: HybridEmbedder,
         mock_dense: SentenceTransformerEmbedder,
     ) -> None:
-        import numpy as np
-
         mock_dense._model.encode.return_value = np.array(  # type: ignore[attr-defined]
             [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]
         )
@@ -332,8 +314,6 @@ class TestHybridEmbedderEmbedBatch:
         hybrid_embedder: HybridEmbedder,
         mock_dense: SentenceTransformerEmbedder,
     ) -> None:
-        import numpy as np
-
         mock_dense._model.encode.return_value = np.array(  # type: ignore[attr-defined]
             [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]
         )

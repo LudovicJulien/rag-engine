@@ -78,7 +78,6 @@ class TestEmbeddingCacheGet:
         assert cache.hit_count == 1
 
     def test_get_different_model_key_is_miss(self, cache: EmbeddingCache) -> None:
-        """Same text with different model key should be a cache miss."""
         cache.set(text="Le Plateau", model_key="model-a", vector=[0.1, 0.2, 0.3])
         result = cache.get(text="Le Plateau", model_key="model-b")
         assert result is None
@@ -86,7 +85,8 @@ class TestEmbeddingCacheGet:
     def test_get_handles_corrupted_cache_file(
         self, cache: EmbeddingCache, tmp_path: Path
     ) -> None:
-        """Corrupted cache file should return None and count as miss."""
+        """Corrupted cache file returns None
+        treated as miss rather than raised as exception."""
         cache.set(text="Le Plateau", model_key="model-a", vector=[0.1, 0.2, 0.3])
         path = cache._cache_path("Le Plateau", "model-a")
         path.write_text("corrupted json {{{", encoding="utf-8")
@@ -107,14 +107,12 @@ class TestEmbeddingCacheSet:
             cache.set(text="Le Plateau", model_key="model-a", vector=[])
 
     def test_set_overwrites_existing(self, cache: EmbeddingCache) -> None:
-        """Setting the same text twice overwrites the previous vector."""
         cache.set(text="Le Plateau", model_key="model-a", vector=[0.1, 0.2, 0.3])
         cache.set(text="Le Plateau", model_key="model-a", vector=[0.9, 0.8, 0.7])
         result = cache.get(text="Le Plateau", model_key="model-a")
         assert result == pytest.approx([0.9, 0.8, 0.7])
 
     def test_set_different_models_independent(self, cache: EmbeddingCache) -> None:
-        """Same text with different model keys are stored independently."""
         cache.set(text="Le Plateau", model_key="model-a", vector=[0.1, 0.2, 0.3])
         cache.set(text="Le Plateau", model_key="model-b", vector=[0.9, 0.8, 0.7])
         result_a = cache.get(text="Le Plateau", model_key="model-a")
