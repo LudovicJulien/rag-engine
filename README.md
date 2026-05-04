@@ -62,7 +62,7 @@ semantic search with LLM-powered answers out of the box.
 ## Planned Features
 
 - [x] Ingestion pipeline (pre-chunked JSON)
-- [ ] Hybrid embeddings (dense + sparse BM25)
+- [x] Hybrid embeddings (dense + sparse BM25)
 - [ ] Vector store with metadata filtering (Qdrant)
 - [ ] Hybrid retrieval with RRF fusion + MMR
 - [ ] Cross-encoder re-ranking
