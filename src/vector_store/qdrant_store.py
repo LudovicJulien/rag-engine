@@ -11,6 +11,8 @@ from qdrant_client.models import (
     Distance,
     Fusion,
     HnswConfigDiff,
+    PayloadSchemaType,
+    PointIdsList,
     PointStruct,
     Prefetch,
     SparseVector,
@@ -196,6 +198,83 @@ class QdrantVectorStore(VectorStore):
     def count(self) -> int:
         result = self._client.count(collection_name=self._collection_name, exact=True)
         return int(result.count)
+
+    def delete_chunk_by_id(self, chunk_id: str) -> bool:
+        """Delete a single point by its chunk_id.
+
+        Args:
+            chunk_id: The unique identifier of the chunk to delete.
+
+        Returns:
+            True if the point was deleted, False if the chunk was not found.
+
+        Raises:
+            RuntimeError: If the backend returns an error.
+        """
+        point_id = str(uuid.uuid5(_POINT_ID_NAMESPACE, chunk_id))
+        try:
+            existing = self._client.retrieve(
+                collection_name=self._collection_name,
+                ids=[point_id],
+                with_payload=False,
+                with_vectors=False,
+            )
+            if not existing:
+                return False
+            self._client.delete(
+                collection_name=self._collection_name,
+                points_selector=PointIdsList(points=[point_id]),
+            )
+            return True
+        except UnexpectedResponse as exc:
+            raise RuntimeError(f"Failed to delete chunk '{chunk_id}': {exc}") from exc
+
+    def create_payload_index(self, field_name: str) -> None:
+        """Create a keyword payload index on the given field.
+
+        Args:
+            field_name: The payload field name to index.
+
+        Raises:
+            RuntimeError: If the backend returns an error.
+        """
+        try:
+            self._client.create_payload_index(
+                collection_name=self._collection_name,
+                field_name=field_name,
+                field_schema=PayloadSchemaType.KEYWORD,
+            )
+        except UnexpectedResponse as exc:
+            raise RuntimeError(
+                f"Failed to create payload index on '{field_name}': {exc}"
+            ) from exc
+
+    def scroll_all_chunks(self, batch_size: int = 100) -> list[Chunk]:
+        """Scroll through the entire collection and return all chunks.
+
+        Args:
+            batch_size: Number of points to fetch per page.
+
+        Returns:
+            All chunks in the collection, or an empty list if the collection is
+            empty.
+        """
+        chunks: list[Chunk] = []
+        offset = None
+        while True:
+            records, next_offset = self._client.scroll(
+                collection_name=self._collection_name,
+                limit=batch_size,
+                offset=offset,
+                with_payload=True,
+                with_vectors=False,
+            )
+            for record in records:
+                chunks.append(self._point_to_chunk(record))
+            if next_offset is None:
+                break
+            offset = next_offset
+        return chunks
 
     @staticmethod
     def _point_to_chunk(point: Any) -> Chunk:
