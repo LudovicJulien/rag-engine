@@ -1,4 +1,4 @@
-# src/embeddings/cache.py
+# src/embeddings/embedding_cache.py
 from __future__ import annotations
 
 import hashlib

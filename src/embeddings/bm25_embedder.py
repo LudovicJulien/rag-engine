@@ -5,7 +5,7 @@ import hashlib
 import math
 from collections import Counter
 
-from src.embeddings.interface import EmbeddingModel
+from src.embeddings.embedding_model import EmbeddingModel
 
 
 class BM25SparseEmbedder(EmbeddingModel):

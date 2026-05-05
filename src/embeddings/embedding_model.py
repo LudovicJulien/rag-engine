@@ -1,4 +1,4 @@
-# src/embeddings/interface.py
+# src/embeddings/embedding_model.py
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
