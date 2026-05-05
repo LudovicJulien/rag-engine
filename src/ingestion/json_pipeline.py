@@ -5,7 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from src.ingestion.pipeline import DataIngestionPipeline
+from src.ingestion.ingestion_pipeline import DataIngestionPipeline
 from src.shared.models import Chunk, ChunkMetadata
 
 
