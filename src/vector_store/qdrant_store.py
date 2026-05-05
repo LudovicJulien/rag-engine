@@ -157,6 +157,7 @@ class QdrantVectorStore(VectorStore):
         score_threshold: float | None = None,
     ) -> list[SearchResult]:
         prefetch_limit = top_k * 2
+        threshold = score_threshold if score_threshold else None
 
         response = self._client.query_points(
             collection_name=self._collection_name,
@@ -177,7 +178,7 @@ class QdrantVectorStore(VectorStore):
             ],
             query=Fusion.RRF,
             limit=top_k,
-            score_threshold=score_threshold,
+            score_threshold=threshold,
         )
 
         return [
