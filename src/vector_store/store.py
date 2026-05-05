@@ -138,6 +138,48 @@ class VectorStore(ABC):
     def count(self) -> int:
         """Return the total number of points in this instance's collection."""
 
+    @abstractmethod
+    def delete_chunk_by_id(self, chunk_id: str) -> bool:
+        """Delete a single point by its chunk_id.
+
+        Args:
+            chunk_id: The unique identifier of the chunk to delete.
+
+        Returns:
+            True if the point was deleted, False if the chunk was not found.
+
+        Raises:
+            RuntimeError: If the backend returns an error.
+        """
+
+    @abstractmethod
+    def create_payload_index(self, field_name: str) -> None:
+        """Create a keyword payload index on the given field.
+
+        Intended for filterable metadata fields such as language
+
+        Args:
+            field_name: The payload field name to index.
+
+        Raises:
+            RuntimeError: If the backend returns an error.
+        """
+
+    @abstractmethod
+    def scroll_all_chunks(self, batch_size: int = 100) -> list[Chunk]:
+        """Scroll through the entire collection and return all chunks.
+
+        Paginates internally so the full collection is never loaded in a single
+        request.
+
+        Args:
+            batch_size: Number of points to fetch per page.
+
+        Returns:
+            All chunks in the collection, or an empty list if the collection is
+            empty.
+        """
+
     @staticmethod
     def _validate_upsert_inputs(
         chunks: list[Chunk],
