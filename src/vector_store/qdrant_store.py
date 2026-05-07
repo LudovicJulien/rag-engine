@@ -22,7 +22,7 @@ from qdrant_client.models import (
 
 from src.embeddings.hybrid_embedder import HybridEmbedding
 from src.shared.models import Chunk, ChunkMetadata
-from src.vector_store.vecteur_store import SearchResult, UpsertResult, VectorStore
+from src.vector_store.vector_store import SearchResult, UpsertResult, VectorStore
 
 _T = TypeVar("_T")
 

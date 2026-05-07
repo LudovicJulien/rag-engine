@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from src.embeddings.hybrid_embedder import HybridEmbedding
-from src.vector_store.vecteur_store import SearchResult
+from src.vector_store.vector_store import SearchResult
 
 
 class Retriever(ABC):

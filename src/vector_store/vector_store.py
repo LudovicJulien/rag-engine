@@ -1,4 +1,4 @@
-# src/vector_store/vecteur_store.py
+# src/vector_store/vector_store.py
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
