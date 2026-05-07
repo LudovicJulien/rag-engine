@@ -49,7 +49,7 @@ class Retriever(ABC):
                 *top_k* is returned.
 
         Returns:
-            Ordered list of :class:`~src.vector_store.vecteur_store.SearchResult`,
+            Ordered list of :class:`~src.vector_store.vector_store.SearchResult`,
             highest score first.  May be shorter than *top_k* when fewer
             results satisfy the score threshold.
 
