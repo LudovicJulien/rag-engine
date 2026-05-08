@@ -23,6 +23,7 @@ from typing import Optional
 
 from src.embeddings.hybrid_embedder import HybridEmbedding
 from src.retrieval.retriever import Retriever
+from src.shared.models import MetadataFilter
 from src.vector_store.vector_store import SearchResult, VectorStore
 
 logger = logging.getLogger(__name__)
@@ -108,6 +109,7 @@ class DenseRetriever(Retriever):
         *,
         top_k: Optional[int] = None,
         score_threshold: Optional[float] = None,
+        filters: Optional[list[MetadataFilter]] = None,
     ) -> list[SearchResult]:
         """Return the most relevant chunks for *query_embedding*.
 
@@ -125,6 +127,9 @@ class DenseRetriever(Retriever):
             top_k: Override ``config.top_k`` for this call only.
             score_threshold: Override ``config.score_threshold`` for this
                 call only.
+            filters: Optional equality filters applied to payload fields
+                before scoring.  All conditions are ANDed together.
+                ``None`` disables payload filtering.
 
         Returns:
             Ordered list of :class:`~src.vector_store.vector_store.SearchResult`,
@@ -156,6 +161,7 @@ class DenseRetriever(Retriever):
             query_embedding=query_embedding,
             top_k=effective_top_k,
             score_threshold=effective_threshold,
+            filters=filters,
         )
 
         logger.info(

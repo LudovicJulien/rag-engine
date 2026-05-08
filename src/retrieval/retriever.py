@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from src.embeddings.hybrid_embedder import HybridEmbedding
+from src.shared.models import MetadataFilter
 from src.vector_store.vector_store import SearchResult
 
 
@@ -36,6 +37,7 @@ class Retriever(ABC):
         *,
         top_k: Optional[int] = None,
         score_threshold: Optional[float] = None,
+        filters: Optional[list[MetadataFilter]] = None,
     ) -> list[SearchResult]:
         """Return the most relevant chunks for *query_embedding*.
 
@@ -47,6 +49,9 @@ class Retriever(ABC):
             score_threshold: Minimum relevance score in [0.0, 1.0].
                 ``None`` disables filtering so every candidate up to
                 *top_k* is returned.
+            filters: Optional equality filters applied to payload fields
+                before scoring.  All conditions are ANDed together.
+                ``None`` disables payload filtering.
 
         Returns:
             Ordered list of :class:`~src.vector_store.vector_store.SearchResult`,
