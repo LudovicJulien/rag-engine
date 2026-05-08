@@ -6,7 +6,7 @@ from typing import Any
 
 from sentence_transformers import SentenceTransformer
 
-from src.embeddings.interface import EmbeddingModel
+from src.embeddings.embedding_model import EmbeddingModel
 
 
 class SentenceTransformerEmbedder(EmbeddingModel):

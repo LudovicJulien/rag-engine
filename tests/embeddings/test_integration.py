@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from src.embeddings.bm25_embedder import BM25SparseEmbedder
-from src.embeddings.cache import EmbeddingCache
+from src.embeddings.embedding_cache import EmbeddingCache
 from src.embeddings.hybrid_embedder import HybridEmbedder, HybridEmbedding
 from src.embeddings.sentence_transformer_embedder import SentenceTransformerEmbedder
 from src.ingestion.json_pipeline import JSONChunkIngestionPipeline

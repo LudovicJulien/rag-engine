@@ -3,7 +3,7 @@ import pytest
 
 from src.embeddings.hybrid_embedder import HybridEmbedding
 from src.shared.models import Chunk, ChunkMetadata
-from src.vector_store.store import VectorStore
+from src.vector_store.vector_store import VectorStore
 
 
 def _make_chunk() -> Chunk:

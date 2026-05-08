@@ -9,8 +9,11 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant_client.models import (
     Distance,
+    FieldCondition,
+    Filter,
     Fusion,
     HnswConfigDiff,
+    MatchValue,
     PayloadSchemaType,
     PointIdsList,
     PointStruct,
@@ -21,13 +24,29 @@ from qdrant_client.models import (
 )
 
 from src.embeddings.hybrid_embedder import HybridEmbedding
-from src.shared.models import Chunk, ChunkMetadata
-from src.vector_store.store import SearchResult, UpsertResult, VectorStore
+from src.shared.models import Chunk, ChunkMetadata, MetadataFilter
+from src.vector_store.vector_store import SearchResult, UpsertResult, VectorStore
 
 _T = TypeVar("_T")
 
 # Stable namespace for deterministic UUID5 point IDs derived from chunk_id strings.
 _POINT_ID_NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+
+
+def _build_filter(filters: list[MetadataFilter] | None) -> Filter | None:
+    """Translate domain filters to a Qdrant Filter (AND of equality conditions).
+
+    Returns ``None`` when *filters* is empty or ``None`` so Qdrant skips
+    payload filtering entirely.
+    """
+    if not filters:
+        return None
+    return Filter(
+        must=[
+            FieldCondition(key=f.field, match=MatchValue(value=f.value))
+            for f in filters
+        ]
+    )
 
 
 def _retry(fn: Callable[[], _T], *, max_attempts: int, base_delay: float) -> _T:
@@ -157,9 +176,11 @@ class QdrantVectorStore(VectorStore):
         query_embedding: HybridEmbedding,
         top_k: int = 5,
         score_threshold: float | None = None,
+        filters: list[MetadataFilter] | None = None,
     ) -> list[SearchResult]:
         prefetch_limit = top_k * 2
         threshold = score_threshold if score_threshold else None
+        qdrant_filter = _build_filter(filters)
 
         response = self._client.query_points(
             collection_name=self._collection_name,
@@ -181,6 +202,7 @@ class QdrantVectorStore(VectorStore):
             query=Fusion.RRF,
             limit=top_k,
             score_threshold=threshold,
+            query_filter=qdrant_filter,
         )
 
         return [

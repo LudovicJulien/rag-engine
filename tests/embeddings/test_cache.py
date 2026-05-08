@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.embeddings.cache import EmbeddingCache
+from src.embeddings.embedding_cache import EmbeddingCache
 
 
 @pytest.fixture

@@ -1,4 +1,4 @@
-# src/ingestion/pipeline.py
+# src/ingestion/ingestion_pipeline.py
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

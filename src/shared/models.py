@@ -5,6 +5,27 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+@dataclass(frozen=True)
+class MetadataFilter:
+    """A single equality filter on a payload field.
+
+    Attributes:
+        field: Dot-notation path to the field (e.g. ``"metadata.language"``,
+            ``"parent_doc_id"``).
+        value: The exact value the field must match.
+
+    Raises:
+        ValueError: If *field* is empty.
+    """
+
+    field: str
+    value: str
+
+    def __post_init__(self) -> None:
+        if not self.field:
+            raise ValueError("MetadataFilter field cannot be empty")
+
+
 @dataclass
 class ChunkMetadata:
     """Domain-agnostic metadata container for a chunk.

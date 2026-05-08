@@ -10,7 +10,7 @@ from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant_client.models import PayloadSchemaType
 
 from src.embeddings.hybrid_embedder import HybridEmbedding
-from src.shared.models import Chunk, ChunkMetadata
+from src.shared.models import Chunk, ChunkMetadata, MetadataFilter
 from src.vector_store.qdrant_store import QdrantVectorStore
 
 
@@ -380,6 +380,68 @@ class TestQdrantVectorStoreSearch:
         results = store.search(_make_embedding(), top_k=1)
 
         assert results[0].chunk.metadata.metadata.get("language") == "fr"
+
+    def test_search_passes_no_filter_when_filters_none(
+        self, store: QdrantVectorStore, mock_client: MagicMock
+    ) -> None:
+        mock_client.query_points.return_value.points = []
+
+        store.search(_make_embedding(), top_k=5, filters=None)
+
+        kwargs = mock_client.query_points.call_args.kwargs
+        assert kwargs["query_filter"] is None
+
+    def test_search_passes_qdrant_filter_when_filters_provided(
+        self, store: QdrantVectorStore, mock_client: MagicMock
+    ) -> None:
+        from qdrant_client.models import FieldCondition
+
+        mock_client.query_points.return_value.points = []
+
+        store.search(
+            _make_embedding(),
+            top_k=5,
+            filters=[MetadataFilter(field="metadata.language", value="fr")],
+        )
+        kwargs = mock_client.query_points.call_args.kwargs
+        must = kwargs["query_filter"].must
+        assert isinstance(must, list)
+        assert len(must) == 1
+        assert isinstance(must[0], FieldCondition)
+
+    def test_search_filter_uses_correct_field_and_value(
+        self, store: QdrantVectorStore, mock_client: MagicMock
+    ) -> None:
+        from qdrant_client.models import MatchValue
+
+        mock_client.query_points.return_value.points = []
+
+        store.search(
+            _make_embedding(),
+            top_k=5,
+            filters=[MetadataFilter(field="metadata.language", value="fr")],
+        )
+
+        condition = mock_client.query_points.call_args.kwargs["query_filter"].must[0]
+        assert condition.key == "metadata.language"
+        assert condition.match == MatchValue(value="fr")
+
+    def test_search_ands_multiple_filters(
+        self, store: QdrantVectorStore, mock_client: MagicMock
+    ) -> None:
+        mock_client.query_points.return_value.points = []
+
+        store.search(
+            _make_embedding(),
+            top_k=5,
+            filters=[
+                MetadataFilter(field="metadata.language", value="fr"),
+                MetadataFilter(field="parent_doc_id", value="doc-42"),
+            ],
+        )
+
+        must_conditions = mock_client.query_points.call_args.kwargs["query_filter"].must
+        assert len(must_conditions) == 2
 
 
 class TestQdrantVectorStoreHealthCheck:

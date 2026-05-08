@@ -63,8 +63,8 @@ semantic search with LLM-powered answers out of the box.
 
 - [x] Ingestion pipeline (pre-chunked JSON)
 - [x] Hybrid embeddings (dense + sparse BM25)
-- [ ] Vector store with metadata filtering (Qdrant)
-- [ ] Hybrid retrieval with RRF fusion + MMR
+- [x] Vector store with metadata filtering (Qdrant)
+- [x] Hybrid retrieval with RRF fusion + MMR
 - [ ] Cross-encoder re-ranking
 - [ ] LLM generation (Ollama gemma3:4b  )
 - [ ] Evaluation framework (RAGAS metrics)
