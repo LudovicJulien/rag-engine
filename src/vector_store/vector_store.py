@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 from src.embeddings.hybrid_embedder import HybridEmbedding
-from src.shared.models import Chunk
+from src.shared.models import Chunk, MetadataFilter
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,6 +112,7 @@ class VectorStore(ABC):
         query_embedding: HybridEmbedding,
         top_k: int = 5,
         score_threshold: float | None = None,
+        filters: list[MetadataFilter] | None = None,
     ) -> list[SearchResult]:
         """Search for the most similar chunks to the query embedding.
 
@@ -121,6 +122,9 @@ class VectorStore(ABC):
             score_threshold: Minimum similarity score in [0.0, 1.0].
                 ``None`` means no filter is applied; every candidate
                 up to *top_k* is returned regardless of score.
+            filters: Optional list of equality filters applied to payload
+                fields before scoring.  All conditions are ANDed together.
+                ``None`` disables filtering (returns all candidates).
 
         Returns:
             List of :class:`SearchResult` objects ordered by descending
