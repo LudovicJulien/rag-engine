@@ -6,7 +6,7 @@ import pytest
 from src.embeddings.hybrid_embedder import HybridEmbedding
 from src.retrieval.dense import DenseRetriever, DenseRetrieverConfig
 from src.retrieval.retriever import Retriever
-from src.shared.models import Chunk, ChunkMetadata
+from src.shared.models import Chunk, ChunkMetadata, MetadataFilter
 from src.vector_store.vector_store import SearchResult, UpsertResult, VectorStore
 
 # ---------------------------------------------------------------------------
@@ -41,6 +41,7 @@ class FakeVectorStore(VectorStore):
     def __init__(self, results: list[SearchResult] | None = None) -> None:
         self._results = results or []
         self.last_search_call: dict[str, int | float | None] = {}
+        self.last_filters: Optional[list[MetadataFilter]] = None
 
     def create_collection(self, dense_dim: int) -> None:
         return None
@@ -61,8 +62,13 @@ class FakeVectorStore(VectorStore):
         query_embedding: HybridEmbedding,
         top_k: int = 5,
         score_threshold: Optional[float] = None,
+        filters: Optional[list[MetadataFilter]] = None,
     ) -> list[SearchResult]:
-        self.last_search_call = {"top_k": top_k, "score_threshold": score_threshold}
+        self.last_search_call = {
+            "top_k": top_k,
+            "score_threshold": score_threshold,
+        }
+        self.last_filters = filters
         return self._results
 
     def health_check(self) -> bool:
@@ -173,3 +179,23 @@ class TestDenseRetrieverRetrieve:
         results = retriever.retrieve(_make_embedding())
         assert results[0].score == pytest.approx(0.95)
         assert results[0].chunk.text == "Paris is the capital of France."
+
+    def test_filters_none_by_default(self) -> None:
+        store = FakeVectorStore()
+        DenseRetriever(store).retrieve(_make_embedding())
+        assert store.last_filters is None
+
+    def test_filters_forwarded_to_store(self) -> None:
+        store = FakeVectorStore()
+        f = MetadataFilter(field="metadata.language", value="fr")
+        DenseRetriever(store).retrieve(_make_embedding(), filters=[f])
+        assert store.last_filters == [f]
+
+    def test_multiple_filters_forwarded(self) -> None:
+        store = FakeVectorStore()
+        filters = [
+            MetadataFilter(field="metadata.language", value="fr"),
+            MetadataFilter(field="parent_doc_id", value="doc-42"),
+        ]
+        DenseRetriever(store).retrieve(_make_embedding(), filters=filters)
+        assert store.last_filters == filters

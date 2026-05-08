@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from src.shared.models import Chunk, ChunkMetadata
+from src.shared.models import Chunk, ChunkMetadata, MetadataFilter
 
 
 def _make_chunk(**kwargs: Any) -> Chunk:
@@ -19,6 +19,32 @@ def _make_chunk(**kwargs: Any) -> Chunk:
     }
     defaults.update(kwargs)
     return Chunk(**defaults)
+
+
+class TestMetadataFilter:
+    def test_field_and_value_stored(self) -> None:
+        f = MetadataFilter(field="metadata.language", value="fr")
+        assert f.field == "metadata.language"
+        assert f.value == "fr"
+
+    def test_empty_field_raises(self) -> None:
+        with pytest.raises(ValueError, match="field cannot be empty"):
+            MetadataFilter(field="", value="fr")
+
+    def test_is_frozen(self) -> None:
+        f = MetadataFilter(field="metadata.language", value="fr")
+        with pytest.raises(AttributeError):
+            setattr(f, "field", "other")
+
+    def test_equality(self) -> None:
+        assert MetadataFilter(field="metadata.language", value="fr") == MetadataFilter(
+            field="metadata.language", value="fr"
+        )
+
+    def test_inequality_on_different_value(self) -> None:
+        assert MetadataFilter(field="metadata.language", value="fr") != MetadataFilter(
+            field="metadata.language", value="en"
+        )
 
 
 class TestChunkMetadataCreation:
