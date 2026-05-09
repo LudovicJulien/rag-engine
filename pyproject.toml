@@ -28,6 +28,7 @@ dependencies = [
 
     # LLM
     "ollama>=0.2",
+    "huggingface_hub>=0.23",
 
     # API
     "fastapi>=0.111",
