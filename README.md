@@ -66,7 +66,7 @@ semantic search with LLM-powered answers out of the box.
 - [x] Vector store with metadata filtering (Qdrant)
 - [x] Hybrid retrieval with RRF fusion + MMR
 - [ ] Cross-encoder re-ranking
-- [ ] LLM generation (Ollama gemma3:4b  )
+- [x] LLM generation (Ollama gemma3:4b)
 - [ ] Evaluation framework (RAGAS metrics)
 - [ ] FastAPI REST API
 - [ ] Docker + CI/CD
