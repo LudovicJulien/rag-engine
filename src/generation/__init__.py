@@ -3,6 +3,7 @@ from src.generation.anthropic_generator import (
     AnthropicGenerator,
     AnthropicGeneratorConfig,
 )
+from src.generation.factory import get_generator
 from src.generation.generator import GenerationResult, LLMGenerator
 from src.generation.huggingface_generator import (
     HuggingFaceGenerator,
@@ -19,4 +20,5 @@ __all__ = [
     "LLMGenerator",
     "OllamaGenerator",
     "OllamaGeneratorConfig",
+    "get_generator",
 ]
