@@ -21,6 +21,8 @@ def _make_settings(provider: str, model: str = "some-model") -> MagicMock:
     settings.llm_model = model
     settings.llm_api_key = ""
     settings.llm_base_url = "http://localhost:11434"
+    settings.llm_domain = "general"
+    settings.llm_max_context_tokens = 4096
     return settings
 
 

@@ -277,6 +277,8 @@ class TestHuggingFaceGeneratorFromSettings:
         settings = MagicMock()
         settings.llm_model = "org/my-model"
         settings.llm_api_key = "hf_secret"
+        settings.llm_domain = "general"
+        settings.llm_max_context_tokens = 4096
 
         with patch("src.generation.huggingface_generator.InferenceClient") as mock_cls:
             mock_cls.return_value = MagicMock()
@@ -289,6 +291,8 @@ class TestHuggingFaceGeneratorFromSettings:
         settings = MagicMock()
         settings.llm_model = "org/my-model"
         settings.llm_api_key = ""
+        settings.llm_domain = "general"
+        settings.llm_max_context_tokens = 4096
 
         with patch("src.generation.huggingface_generator.InferenceClient") as mock_cls:
             mock_cls.return_value = MagicMock()

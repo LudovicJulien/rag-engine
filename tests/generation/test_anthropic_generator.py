@@ -299,6 +299,8 @@ class TestAnthropicGeneratorFromSettings:
         settings = MagicMock()
         settings.llm_model = "claude-sonnet-4-6"
         settings.llm_api_key = "sk-ant-secret"
+        settings.llm_domain = "general"
+        settings.llm_max_context_tokens = 4096
 
         with patch(
             "src.generation.anthropic_generator.anthropic.Anthropic"
@@ -313,6 +315,8 @@ class TestAnthropicGeneratorFromSettings:
         settings = MagicMock()
         settings.llm_model = "claude-haiku-4-5"
         settings.llm_api_key = ""
+        settings.llm_domain = "general"
+        settings.llm_max_context_tokens = 4096
 
         with patch(
             "src.generation.anthropic_generator.anthropic.Anthropic"

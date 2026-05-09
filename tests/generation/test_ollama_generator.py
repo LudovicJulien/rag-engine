@@ -294,6 +294,8 @@ class TestOllamaGeneratorFromSettings:
         settings = MagicMock()
         settings.llm_model = "llama3:8b"
         settings.llm_base_url = "http://ollama-server:11434"
+        settings.llm_domain = "general"
+        settings.llm_max_context_tokens = 4096
 
         with patch("src.generation.ollama_generator.ollama.Client") as mock_cls:
             mock_cls.return_value = MagicMock()
