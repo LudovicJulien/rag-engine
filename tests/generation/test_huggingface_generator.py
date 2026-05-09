@@ -105,8 +105,9 @@ class TestHuggingFaceGeneratorProperties:
 
 
 class TestHuggingFaceGeneratorGenerate:
+    @staticmethod
     def _make_generator(
-        self, model: str = "org/model"
+        model: str = "org/model",
     ) -> tuple[HuggingFaceGenerator, MagicMock]:
         with patch("src.generation.huggingface_generator.InferenceClient") as mock_cls:
             mock_client = MagicMock()
@@ -207,7 +208,8 @@ class TestHuggingFaceGeneratorGenerate:
 
 
 class TestHuggingFaceGeneratorInputValidation:
-    def _make_generator(self) -> HuggingFaceGenerator:
+    @staticmethod
+    def _make_generator() -> HuggingFaceGenerator:
         with patch("src.generation.huggingface_generator.InferenceClient"):
             gen = HuggingFaceGenerator()
         gen._client = MagicMock()
@@ -242,7 +244,8 @@ class TestHuggingFaceGeneratorInputValidation:
 
 
 class TestHuggingFaceGeneratorErrorHandling:
-    def _make_generator(self) -> HuggingFaceGenerator:
+    @staticmethod
+    def _make_generator() -> HuggingFaceGenerator:
         with patch("src.generation.huggingface_generator.InferenceClient"):
             gen = HuggingFaceGenerator()
         gen._client = MagicMock()

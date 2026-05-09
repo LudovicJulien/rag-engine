@@ -95,7 +95,7 @@ class TestGenerationResult:
     def test_is_frozen(self) -> None:
         result = _make_result()
         with pytest.raises((AttributeError, TypeError)):
-            result.answer = "mutated"  # type: ignore[misc]
+            setattr(result, "answer", "mutated")
 
     # ------------------------------------------------------------------
     # Validation — raises
@@ -160,7 +160,7 @@ class TestLLMGeneratorValidateInputs:
 class TestLLMGeneratorInterface:
     def test_cannot_instantiate_abstract_class(self) -> None:
         with pytest.raises(TypeError):
-            LLMGenerator()  # type: ignore[abstract]
+            type.__call__(LLMGenerator)
 
     def test_stub_provider_name(self) -> None:
         assert _StubGenerator().provider_name == "stub"

@@ -72,7 +72,7 @@ class TestGetTemplate:
     def test_template_is_frozen(self) -> None:
         tpl = get_template()
         with pytest.raises((AttributeError, TypeError)):
-            tpl.system_prompt = "mutated"  # type: ignore[misc]
+            setattr(tpl, "system_prompt", "mutated")
 
 
 # ---------------------------------------------------------------------------

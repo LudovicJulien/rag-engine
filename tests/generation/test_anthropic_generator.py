@@ -225,17 +225,17 @@ class TestAnthropicGeneratorGenerate:
 
 class TestAnthropicGeneratorInputValidation:
     def test_empty_query_raises(self) -> None:
-        gen, mock_client = _make_generator()
+        gen, _ = _make_generator()
         with pytest.raises(ValueError, match="query"):
             gen.generate(query="", context=[_make_chunk()])
 
     def test_whitespace_only_query_raises(self) -> None:
-        gen, mock_client = _make_generator()
+        gen, _ = _make_generator()
         with pytest.raises(ValueError, match="query"):
             gen.generate(query="   ", context=[_make_chunk()])
 
     def test_empty_context_raises(self) -> None:
-        gen, mock_client = _make_generator()
+        gen, _ = _make_generator()
         with pytest.raises(ValueError, match="context"):
             gen.generate(query="Q?", context=[])
 
