@@ -9,6 +9,7 @@ from src.generation.huggingface_generator import (
     HuggingFaceGenerator,
     HuggingFaceGeneratorConfig,
 )
+from src.generation.language_detection import detect_language
 from src.generation.ollama_generator import OllamaGenerator, OllamaGeneratorConfig
 from src.generation.prompt_templates import (
     CURRENT_VERSION,
@@ -23,6 +24,7 @@ __all__ = [
     "AnthropicGeneratorConfig",
     "CURRENT_VERSION",
     "DEFAULT_DOMAIN",
+    "detect_language",
     "DOMAIN_PROMPTS",
     "GenerationResult",
     "HuggingFaceGenerator",

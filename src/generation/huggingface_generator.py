@@ -8,6 +8,7 @@ from huggingface_hub import InferenceClient
 from huggingface_hub.errors import HfHubHTTPError
 
 from src.generation.generator import GenerationResult, LLMGenerator
+from src.generation.language_detection import detect_language
 from src.generation.prompt_templates import get_template
 from src.pipeline.config import Settings
 from src.shared.models import Chunk
@@ -183,7 +184,7 @@ class HuggingFaceGenerator(LLMGenerator):
         return GenerationResult(
             answer=answer,
             sources=[chunk.chunk_id for chunk in context],
-            detected_language="fr",  # placeholder — detect_language added later
+            detected_language=detect_language(query),
             model=self._config.model,
             prompt_version=tpl.version,
             tokens_used=tokens_used,
