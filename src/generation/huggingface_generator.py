@@ -8,12 +8,11 @@ from huggingface_hub import InferenceClient
 from huggingface_hub.errors import HfHubHTTPError
 
 from src.generation.generator import GenerationResult, LLMGenerator
+from src.generation.prompt_templates import get_template
 from src.pipeline.config import Settings
 from src.shared.models import Chunk
 
 logger = logging.getLogger(__name__)
-
-_PROMPT_VERSION = "v0"
 
 
 # ---------------------------------------------------------------------------
@@ -45,6 +44,7 @@ class HuggingFaceGeneratorConfig:
     api_token: str = ""
     temperature: float = 0.1
     max_new_tokens: int = 512
+    domain: str = "general"
 
     def __post_init__(self) -> None:
         if not self.model.strip():
@@ -138,13 +138,14 @@ class HuggingFaceGenerator(LLMGenerator):
             len(context),
         )
 
+        tpl = get_template(domain=self._config.domain)
         try:
             response = self._client.chat_completion(
                 messages=[
-                    {"role": "system", "content": self._build_system_message()},
+                    {"role": "system", "content": tpl.system_prompt},
                     {
                         "role": "user",
-                        "content": self._build_user_message(query, context),
+                        "content": tpl.build_user_message(query, context),
                     },
                 ],
                 temperature=self._config.temperature,
@@ -184,7 +185,7 @@ class HuggingFaceGenerator(LLMGenerator):
             sources=[chunk.chunk_id for chunk in context],
             detected_language="fr",  # placeholder — detect_language added later
             model=self._config.model,
-            prompt_version=_PROMPT_VERSION,
+            prompt_version=tpl.version,
             tokens_used=tokens_used,
         )
 
@@ -218,28 +219,6 @@ class HuggingFaceGenerator(LLMGenerator):
             HuggingFaceGeneratorConfig(
                 model=settings.llm_model,
                 api_token=settings.llm_api_key,
+                domain=settings.llm_domain,
             )
         )
-
-    # ------------------------------------------------------------------
-    # Private helpers
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _build_system_message() -> str:
-        return (
-            "You are a precise and factual assistant. "
-            "Answer the user's question based solely on the provided context. "
-            "If the context does not contain enough information to answer, "
-            "say so clearly. "
-            "When you use information from a source, cite its ID "
-            "inline using the format [id: <chunk_id>]."
-        )
-
-    @staticmethod
-    def _build_user_message(query: str, context: list[Chunk]) -> str:
-        formatted_chunks = "\n\n".join(
-            f"[{i + 1}] (id: {chunk.chunk_id})\n{chunk.text}"
-            for i, chunk in enumerate(context)
-        )
-        return f"Context:\n{formatted_chunks}\n\nQuestion: {query}"

@@ -10,15 +10,27 @@ from src.generation.huggingface_generator import (
     HuggingFaceGeneratorConfig,
 )
 from src.generation.ollama_generator import OllamaGenerator, OllamaGeneratorConfig
+from src.generation.prompt_templates import (
+    CURRENT_VERSION,
+    DEFAULT_DOMAIN,
+    DOMAIN_PROMPTS,
+    PromptTemplate,
+    get_template,
+)
 
 __all__ = [
     "AnthropicGenerator",
     "AnthropicGeneratorConfig",
+    "CURRENT_VERSION",
+    "DEFAULT_DOMAIN",
+    "DOMAIN_PROMPTS",
     "GenerationResult",
     "HuggingFaceGenerator",
     "HuggingFaceGeneratorConfig",
     "LLMGenerator",
     "OllamaGenerator",
     "OllamaGeneratorConfig",
+    "PromptTemplate",
     "get_generator",
+    "get_template",
 ]

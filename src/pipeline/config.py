@@ -68,6 +68,10 @@ class Settings(BaseSettings):
         default="",
         description="API key for remote providers (empty for local providers)",
     )
+    llm_domain: str = Field(
+        default="general",
+        description="Domain specialisation for the LLM prompt (e.g. 'general', 'tourism')",  # noqa: E501
+    )
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     top_k: int = Field(
