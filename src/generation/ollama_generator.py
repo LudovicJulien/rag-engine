@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 import ollama
 
+from src.generation.context_window import guard_context_window
 from src.generation.generator import GenerationResult, LLMGenerator
 from src.generation.language_detection import detect_language
 from src.generation.prompt_templates import get_template
@@ -41,6 +42,7 @@ class OllamaGeneratorConfig:
     temperature: float = 0.1
     num_ctx: int = 4096
     domain: str = "general"
+    max_context_tokens: int = 4096
 
     def __post_init__(self) -> None:
         if not self.model.strip():
@@ -53,6 +55,10 @@ class OllamaGeneratorConfig:
             )
         if self.num_ctx < 1:
             raise ValueError(f"num_ctx must be >= 1, got {self.num_ctx}")
+        if self.max_context_tokens < 0:
+            raise ValueError(
+                f"max_context_tokens must be >= 0, got {self.max_context_tokens}"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -127,6 +133,9 @@ class OllamaGenerator(LLMGenerator):
         )
 
         tpl = get_template(domain=self._config.domain)
+        context = guard_context_window(
+            context, query, tpl.system_prompt, self._config.max_context_tokens
+        )
         try:
             response = self._client.chat(
                 model=self._config.model,
@@ -212,5 +221,6 @@ class OllamaGenerator(LLMGenerator):
                 model=settings.llm_model,
                 base_url=settings.llm_base_url,
                 domain=settings.llm_domain,
+                max_context_tokens=settings.llm_max_context_tokens,
             )
         )

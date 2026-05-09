@@ -7,6 +7,7 @@ from typing import Any
 
 import anthropic
 
+from src.generation.context_window import guard_context_window
 from src.generation.generator import GenerationResult, LLMGenerator
 from src.generation.language_detection import detect_language
 from src.generation.prompt_templates import get_template
@@ -45,6 +46,7 @@ class AnthropicGeneratorConfig:
     max_tokens: int = 1024
     temperature: float | None = None
     domain: str = "general"
+    max_context_tokens: int = 4096
 
     def __post_init__(self) -> None:
         if not self.model.strip():
@@ -54,6 +56,10 @@ class AnthropicGeneratorConfig:
         if self.temperature is not None and not 0.0 <= self.temperature <= 1.0:
             raise ValueError(
                 f"temperature must be in [0.0, 1.0] or None, got {self.temperature}"
+            )
+        if self.max_context_tokens < 0:
+            raise ValueError(
+                f"max_context_tokens must be >= 0, got {self.max_context_tokens}"
             )
 
 
@@ -133,6 +139,9 @@ class AnthropicGenerator(LLMGenerator):
         )
 
         tpl = get_template(domain=self._config.domain)
+        context = guard_context_window(
+            context, query, tpl.system_prompt, self._config.max_context_tokens
+        )
         create_kwargs: dict[str, Any] = {
             "model": self._config.model,
             "max_tokens": self._config.max_tokens,
@@ -237,5 +246,6 @@ class AnthropicGenerator(LLMGenerator):
                 model=settings.llm_model,
                 api_key=settings.llm_api_key,
                 domain=settings.llm_domain,
+                max_context_tokens=settings.llm_max_context_tokens,
             )
         )

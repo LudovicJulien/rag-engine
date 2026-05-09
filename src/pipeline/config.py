@@ -72,6 +72,10 @@ class Settings(BaseSettings):
         default="general",
         description="Domain specialisation for the LLM prompt (e.g. 'general', 'tourism')",  # noqa: E501
     )
+    llm_max_context_tokens: int = Field(
+        default=4096,
+        description="Token budget for the context window guard (0 disables it)",
+    )
 
     # ── Retrieval ─────────────────────────────────────────────────────────────
     top_k: int = Field(
@@ -125,6 +129,13 @@ class Settings(BaseSettings):
         if normalized not in allowed:
             raise ValueError(f"llm_provider must be one of {allowed}, got '{value}'")
         return normalized
+
+    @field_validator("llm_max_context_tokens")
+    @classmethod
+    def validate_llm_max_context_tokens(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError(f"llm_max_context_tokens must be >= 0, got {v}")
+        return v
 
     @field_validator("log_level")
     @classmethod

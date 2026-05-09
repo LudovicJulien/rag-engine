@@ -3,6 +3,7 @@ from src.generation.anthropic_generator import (
     AnthropicGenerator,
     AnthropicGeneratorConfig,
 )
+from src.generation.context_window import guard_context_window
 from src.generation.factory import get_generator
 from src.generation.generator import GenerationResult, LLMGenerator
 from src.generation.huggingface_generator import (
@@ -27,6 +28,7 @@ __all__ = [
     "detect_language",
     "DOMAIN_PROMPTS",
     "GenerationResult",
+    "guard_context_window",
     "HuggingFaceGenerator",
     "HuggingFaceGeneratorConfig",
     "LLMGenerator",
