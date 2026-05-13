@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import pickle
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -113,7 +112,7 @@ class IngestionPipeline:
             self._sparse.embedding_dim,
         )
 
-        bm25_cache_path = self._save_bm25(source)
+        bm25_cache_path = self._save_bm25(Path(source))
 
         embedder = HybridEmbedder(
             dense=self._dense,
@@ -150,8 +149,31 @@ class IngestionPipeline:
             bm25_cache_path=bm25_cache_path,
         )
 
+    @staticmethod
+    def load_bm25(path: str | Path) -> BM25SparseEmbedder:
+        """Reload a BM25 model saved during a previous :meth:`run` call.
+
+        Intended for use at query time: after ingestion the BM25 model can be
+        restored from the path stored in :attr:`IngestResult.bm25_cache_path`
+        without re-fitting on the corpus.
+
+        Args:
+            path: Path returned by :attr:`IngestResult.bm25_cache_path`.
+
+        Returns:
+            The restored, fitted
+            :class:`~src.embeddings.bm25_embedder.BM25SparseEmbedder`.
+
+        Raises:
+            FileNotFoundError: If *path* does not exist.
+            TypeError: If the file does not contain a BM25SparseEmbedder.
+        """
+        return BM25SparseEmbedder.load(path)
+
     def _save_bm25(self, source: Path) -> str:
-        """Pickle the fitted BM25 model to *bm25_cache_dir*.
+        """Persist the fitted BM25 model to *bm25_cache_dir*.
+
+        Delegates to :meth:`BM25SparseEmbedder.save`.
 
         Args:
             source: Ingestion source path — its stem is used as the filename.
@@ -159,9 +181,7 @@ class IngestionPipeline:
         Returns:
             Resolved absolute path to the saved pickle file.
         """
-        self._bm25_cache_dir.mkdir(parents=True, exist_ok=True)
         cache_path = self._bm25_cache_dir / f"{source.stem}.pkl"
-        with cache_path.open("wb") as f:
-            pickle.dump(self._sparse, f)
-        logger.info("Saved BM25 model to %s", cache_path.resolve())
-        return str(cache_path.resolve())
+        resolved = self._sparse.save(cache_path)
+        logger.info("Saved BM25 model to %s", resolved)
+        return str(resolved)

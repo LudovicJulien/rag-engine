@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import hashlib
 import math
+import pickle
 from collections import Counter
+from pathlib import Path
 
 from src.embeddings.embedding_model import EmbeddingModel
 
@@ -166,6 +168,54 @@ class BM25SparseEmbedder(EmbeddingModel):
             raise RuntimeError("BM25SparseEmbedder must be fitted before embedding")
 
         return [self.embed_text(text) for text in texts]
+
+    def save(self, path: str | Path) -> Path:
+        """Serialize the fitted model to a pickle file.
+
+        Parent directories are created automatically if they do not exist.
+
+        Args:
+            path: Destination path for the pickle file
+                (e.g. ``.bm25_cache/corpus.pkl``).
+
+        Returns:
+            Resolved absolute path to the written file.
+
+        Raises:
+            RuntimeError: If the model has not been fitted yet.
+        """
+        if not self._fitted:
+            raise RuntimeError(
+                "Cannot save an unfitted BM25SparseEmbedder — call fit() first."
+            )
+        resolved_path = Path(path)
+        resolved_path.parent.mkdir(parents=True, exist_ok=True)
+        with resolved_path.open("wb") as f:
+            pickle.dump(self, f)
+        return resolved_path.resolve()
+
+    @classmethod
+    def load(cls, path: str | Path) -> BM25SparseEmbedder:
+        """Load a fitted BM25SparseEmbedder from a pickle file.
+
+        Args:
+            path: Path to a file produced by :meth:`save`.
+
+        Returns:
+            The restored :class:`BM25SparseEmbedder` instance.
+
+        Raises:
+            FileNotFoundError: If *path* does not exist.
+            TypeError: If the file does not contain a :class:`BM25SparseEmbedder`.
+        """
+        resolved_path = Path(path)
+        if not resolved_path.exists():
+            raise FileNotFoundError(f"BM25 cache not found: {resolved_path}")
+        with resolved_path.open("rb") as f:
+            obj = pickle.load(f)
+        if not isinstance(obj, cls):
+            raise TypeError(f"Expected {cls.__name__}, got {type(obj).__name__}")
+        return obj
 
     def get_cache_key(self) -> str:
         """Return a unique cache key for this BM25 configuration.
