@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -348,3 +349,47 @@ class TestSettingsSingleton:
 
         assert settings is not None
         assert hasattr(settings, "qdrant_host")
+
+
+class TestBM25CachePathType:
+    """Tests that bm25_cache_path exposes the expected Python type."""
+
+    def test_bm25_cache_path_is_path(self) -> None:
+        assert isinstance(Settings().bm25_cache_path, Path)
+
+
+class TestBM25CachePathInvariants:
+    """Tests structural invariants of the bm25_cache_path field."""
+
+    def test_default_filename_is_bm25_pkl(self) -> None:
+        assert Settings().bm25_cache_path.name == "bm25.pkl"
+
+    def test_default_parent_directory(self) -> None:
+        assert Settings().bm25_cache_path.parent.name == "rag"
+
+    def test_default_tilde_is_expanded(self) -> None:
+        path = Settings().bm25_cache_path
+        assert "~" not in str(path)
+
+    def test_default_is_absolute(self) -> None:
+        assert Settings().bm25_cache_path.is_absolute()
+
+
+class TestBM25CachePathFromEnv:
+    """Tests environment variable override for bm25_cache_path."""
+
+    def test_bm25_cache_path_from_env(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("BM25_CACHE_PATH", "/tmp/custom/bm25.pkl")
+        assert Settings().bm25_cache_path == Path("/tmp/custom/bm25.pkl")
+
+    def test_bm25_cache_path_tilde_expanded_from_env(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setenv("BM25_CACHE_PATH", "~/.cache/custom/bm25.pkl")
+        result = Settings().bm25_cache_path
+        assert "~" not in str(result)
+        assert result.is_absolute()
