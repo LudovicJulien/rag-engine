@@ -5,7 +5,9 @@ from enum import Enum
 
 import httpx
 from qdrant_client import QdrantClient
+from qdrant_client.http.exceptions import UnexpectedResponse
 
+from src.embeddings.bm25_embedder import BM25SparseEmbedder
 from src.pipeline.config import Settings
 
 
@@ -92,6 +94,86 @@ def _probe_llm(settings: Settings) -> ServiceHealth:
     if settings.llm_provider == "ollama":
         return _probe_ollama(settings.llm_base_url)
     return _probe_api_key(settings.llm_provider, settings.llm_api_key)
+
+
+# ---------------------------------------------------------------------------
+# Config probes — file system and collection state, never raises
+# ---------------------------------------------------------------------------
+
+
+def _probe_bm25_cache(settings: Settings) -> ServiceHealth:
+    path = settings.bm25_cache_path
+    if path.exists():
+        return ServiceHealth(ok=True, detail=f"file found at {path}")
+    return ServiceHealth(ok=False, detail=f"file missing at {path}")
+
+
+def _probe_collection(settings: Settings) -> ServiceHealth:
+    name = settings.collection_name
+    addr = f"{settings.qdrant_host}:{settings.qdrant_port}"
+    try:
+        QdrantClient(
+            host=settings.qdrant_host, port=settings.qdrant_port, timeout=2
+        ).get_collection(collection_name=name)
+        return ServiceHealth(ok=True, detail=f"{name} exists")
+    except UnexpectedResponse:
+        # 404 — Qdrant is up but the collection was never created
+        return ServiceHealth(ok=False, detail=f"{name} not found")
+    except Exception:
+        return ServiceHealth(ok=False, detail=f"qdrant unreachable at {addr}")
+
+
+def check_config(settings: Settings) -> ConfigStatus:
+    """Local configuration validity — files and collection state.
+
+    BM25 cache : checks settings.bm25_cache_path exists on disk (no parsing).
+    Collection : calls QdrantClient.get_collection() with a 2 s timeout;
+                 reports unreachable if Qdrant is down.
+    """
+    return ConfigStatus(
+        bm25_cache=_probe_bm25_cache(settings),
+        collection=_probe_collection(settings),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Statistics helpers — return None rather than raising
+# ---------------------------------------------------------------------------
+
+
+def _get_collection_count(settings: Settings) -> int | None:
+    try:
+        result = QdrantClient(
+            host=settings.qdrant_host, port=settings.qdrant_port, timeout=2
+        ).count(collection_name=settings.collection_name, exact=True)
+        return int(result.count)
+    except Exception:
+        return None
+
+
+def _get_bm25_vocab_size(settings: Settings) -> int | None:
+    try:
+        return BM25SparseEmbedder.load(settings.bm25_cache_path).embedding_dim
+    except Exception:
+        return None
+
+
+def build_diagnostics(settings: Settings) -> DiagnosticsReport:
+    """Aggregate check_health + check_config + statistics into one report.
+
+    collection_count : QdrantClient.count() or None if Qdrant unreachable.
+    bm25_vocab_size  : BM25SparseEmbedder.embedding_dim or None if absent.
+    """
+    health = check_health(settings)
+    config = check_config(settings)
+    return DiagnosticsReport(
+        health=health,
+        config=config,
+        collection_count=(
+            _get_collection_count(settings) if health.qdrant.ok else None
+        ),
+        bm25_vocab_size=_get_bm25_vocab_size(settings),
+    )
 
 
 def check_health(settings: Settings) -> HealthStatus:
