@@ -1,6 +1,9 @@
 # tests/embeddings/test_bm25_embedder.py
 from __future__ import annotations
 
+import pickle
+from pathlib import Path
+
 import pytest
 
 from src.embeddings.bm25_embedder import BM25SparseEmbedder
@@ -259,3 +262,155 @@ class TestBM25SparseEmbedderTokenize:
         result = BM25SparseEmbedder._tokenize("5490 boul Saint-Laurent")
         assert "5490" in result
         assert "saint" in result
+
+
+class TestBM25SparseEmbedderSave:
+    """Tests for BM25SparseEmbedder.save()."""
+
+    def test_save_raises_if_not_fitted(self, tmp_path: Path) -> None:
+        embedder = BM25SparseEmbedder()
+        with pytest.raises(RuntimeError, match="fit\\(\\)"):
+            embedder.save(tmp_path / "model.pkl")
+
+    def test_save_creates_file(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        fitted_embedder.save(path)
+        assert path.exists()
+
+    def test_save_returns_resolved_path(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        returned = fitted_embedder.save(path)
+        assert returned == path.resolve()
+
+    def test_save_creates_nested_parent_dirs(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        nested = tmp_path / "a" / "b" / "c" / "model.pkl"
+        fitted_embedder.save(nested)
+        assert nested.exists()
+
+    def test_save_file_contains_valid_pickle(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        fitted_embedder.save(path)
+        with path.open("rb") as f:
+            obj = pickle.load(f)
+        assert isinstance(obj, BM25SparseEmbedder)
+
+    def test_save_overwrites_existing_file(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        path.write_bytes(b"stale")
+        fitted_embedder.save(path)
+        with path.open("rb") as f:
+            obj = pickle.load(f)
+        assert isinstance(obj, BM25SparseEmbedder)
+
+
+class TestBM25SparseEmbedderLoad:
+    """Tests for BM25SparseEmbedder.load()."""
+
+    def test_load_file_not_found_raises(self, tmp_path: Path) -> None:
+        with pytest.raises(FileNotFoundError, match="BM25 cache not found"):
+            BM25SparseEmbedder.load(tmp_path / "missing.pkl")
+
+    def test_load_wrong_type_raises(self, tmp_path: Path) -> None:
+        path = tmp_path / "wrong.pkl"
+        with path.open("wb") as f:
+            pickle.dump({"not": "a bm25"}, f)
+        with pytest.raises(TypeError, match="Expected BM25SparseEmbedder"):
+            BM25SparseEmbedder.load(path)
+
+    def test_load_returns_bm25_sparse_embedder(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        fitted_embedder.save(path)
+        loaded = BM25SparseEmbedder.load(path)
+        assert isinstance(loaded, BM25SparseEmbedder)
+
+    def test_load_is_fitted(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        fitted_embedder.save(path)
+        loaded = BM25SparseEmbedder.load(path)
+        assert loaded.is_fitted
+
+    def test_load_preserves_hyperparameters(self, tmp_path: Path) -> None:
+        original = BM25SparseEmbedder(k1=1.2, b=0.6, delta=0.8)
+        original.fit(["hello world", "foo bar"])
+        path = tmp_path / "model.pkl"
+        original.save(path)
+        loaded = BM25SparseEmbedder.load(path)
+        assert loaded.k1 == pytest.approx(1.2)
+        assert loaded.b == pytest.approx(0.6)
+        assert loaded.delta == pytest.approx(0.8)
+
+    def test_load_preserves_vocabulary_size(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        fitted_embedder.save(path)
+        loaded = BM25SparseEmbedder.load(path)
+        assert loaded.embedding_dim == fitted_embedder.embedding_dim
+
+    def test_load_embedding_matches_original(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        fitted_embedder.save(path)
+        loaded = BM25SparseEmbedder.load(path)
+        text = "Plateau Montréal"
+        assert loaded.embed_text(text) == pytest.approx(
+            fitted_embedder.embed_text(text)
+        )
+
+    def test_load_accepts_str_path(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        fitted_embedder.save(path)
+        loaded = BM25SparseEmbedder.load(str(path))
+        assert isinstance(loaded, BM25SparseEmbedder)
+
+
+class TestBM25SparseEmbedderSaveLoadRoundtrip:
+    """End-to-end save → load → embed consistency tests."""
+
+    def test_roundtrip_embed_text_is_identical(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        fitted_embedder.save(path)
+        loaded = BM25SparseEmbedder.load(path)
+        for text in ["Plateau", "Rosemont familial", "Mile End cafés"]:
+            assert loaded.embed_text(text) == pytest.approx(
+                fitted_embedder.embed_text(text)
+            )
+
+    def test_roundtrip_embed_batch_is_identical(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        fitted_embedder.save(path)
+        loaded = BM25SparseEmbedder.load(path)
+        texts = ["Le Plateau", "Rosemont", "Outremont calme"]
+        original_batch = fitted_embedder.embed_batch(texts)
+        loaded_batch = loaded.embed_batch(texts)
+        for orig, reloaded in zip(original_batch, loaded_batch):
+            assert reloaded == pytest.approx(orig)
+
+    def test_roundtrip_model_name_is_preserved(
+        self, tmp_path: Path, fitted_embedder: BM25SparseEmbedder
+    ) -> None:
+        path = tmp_path / "model.pkl"
+        fitted_embedder.save(path)
+        loaded = BM25SparseEmbedder.load(path)
+        assert loaded.model_name == fitted_embedder.model_name

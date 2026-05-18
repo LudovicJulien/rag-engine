@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -87,6 +88,12 @@ class Settings(BaseSettings):
         description="Minimum similarity threshold",
     )
 
+    # ── BM25 Cache ────────────────────────────────────────────────────────────
+    bm25_cache_path: Path = Field(
+        default=Path("~/.cache/rag/bm25.pkl"),
+        description="Path to the fitted BM25 pickle file (~ is expanded at load time)",
+    )
+
     # ── Logging ───────────────────────────────────────────────────────────────
     log_level: str = Field(
         default="INFO",
@@ -94,6 +101,11 @@ class Settings(BaseSettings):
     )
 
     # ── Validators ────────────────────────────────────────────────────────────
+    @field_validator("bm25_cache_path")
+    @classmethod
+    def expand_bm25_cache_path(cls, v: Path) -> Path:
+        return v.expanduser()
+
     @field_validator(
         "qdrant_host",
         "collection_name",
