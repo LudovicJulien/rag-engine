@@ -31,6 +31,10 @@ dependencies = [
     "huggingface_hub>=0.23",
     "anthropic>=0.40",
 
+    # CLI
+    "typer>=0.12",
+    "rich>=13.0",
+
     # API
     "fastapi>=0.111",
     "uvicorn>=0.30",
