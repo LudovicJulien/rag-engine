@@ -298,3 +298,23 @@ def cmd_health(
     display.show_health(status, output)
     if not status.all_ok:
         raise typer.Exit(2)
+
+
+def cmd_doctor(
+    output: OutputFormat = typer.Option(OutputFormat.text, "--output", "-o"),
+) -> None:
+    """Diagnostic complet : config locale + connectivité + statistiques collection.
+
+    Vérifie dans l'ordre :
+    1. Connectivité Qdrant + LLM (check_health)
+    2. Présence du BM25 cache + existence de la collection (check_config)
+    3. Nombre de points dans la collection + taille du vocabulaire BM25
+    Affiche des conseils actionnables pour chaque problème détecté.
+    """
+    import src.cli.display as display  # lazy — display imports from commands
+
+    settings = get_settings()
+    report = build_diagnostics(settings)
+    display.show_doctor(report, output)
+    if not report.all_ok:
+        raise typer.Exit(2)
