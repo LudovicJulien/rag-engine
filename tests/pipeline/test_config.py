@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 import src.pipeline.config as config_module
-from src.pipeline.config import Settings
+from src.pipeline.config import Settings, get_settings
 
 
 class TestSettingsTypes:
@@ -393,3 +393,20 @@ class TestBM25CachePathFromEnv:
         result = Settings().bm25_cache_path
         assert "~" not in str(result)
         assert result.is_absolute()
+
+
+# ---------------------------------------------------------------------------
+# get_settings
+# ---------------------------------------------------------------------------
+
+
+class TestGetSettings:
+    def test_returns_settings_instance(self) -> None:
+        # Use config_module.Settings — reload in other tests may replace the class
+        assert isinstance(get_settings(), config_module.Settings)
+
+    def test_returns_same_object_on_repeated_calls(self) -> None:
+        assert get_settings() is get_settings()
+
+    def test_returned_settings_has_valid_qdrant_port(self) -> None:
+        assert 1 <= get_settings().qdrant_port <= 65535
