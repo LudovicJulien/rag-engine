@@ -238,3 +238,28 @@ def cmd_ingest(
         display.error(str(e))
         raise typer.Exit(2)
     display.show_ingest_result(result, output)
+
+
+def cmd_query(
+    question: str = typer.Argument(..., help="Question en langage naturel"),
+    top_k: int | None = typer.Option(None, "--top-k", "-k"),
+    score_threshold: float | None = typer.Option(None, "--score-threshold"),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--output", "-o"),
+) -> None:
+    """Pose une question et affiche la réponse générée par le pipeline RAG."""
+    import src.cli.display as display  # lazy — display imports from commands
+
+    settings = get_settings()
+    try:
+        with display.spinner("Thinking…"):
+            pipeline = _get_or_build_pipeline(settings)
+            result = pipeline.query(
+                question, top_k=top_k, score_threshold=score_threshold
+            )
+    except FileNotFoundError as e:
+        display.error(str(e))
+        raise typer.Exit(1)
+    except RuntimeError as e:
+        display.error(str(e))
+        raise typer.Exit(2)
+    display.show_rag_result(result, output)
