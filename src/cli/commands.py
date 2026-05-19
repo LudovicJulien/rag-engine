@@ -318,3 +318,12 @@ def cmd_doctor(
     display.show_doctor(report, output)
     if not report.all_ok:
         raise typer.Exit(2)
+
+
+def cmd_config(
+    output: OutputFormat = typer.Option(OutputFormat.text, "--output", "-o"),
+) -> None:
+    """Affiche la configuration active (clés API masquées)."""
+    import src.cli.display as display  # lazy — display imports from commands
+
+    display.show_config(get_settings(), output)
