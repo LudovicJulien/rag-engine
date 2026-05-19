@@ -8,7 +8,7 @@ import typer
 from typer.testing import CliRunner
 
 import src.cli.commands as commands
-from src.cli.commands import _get_or_build_pipeline, cmd_ingest
+from src.cli.commands import cmd_ingest
 from src.pipeline.config import Settings
 from src.pipeline.ingest_pipeline import IngestResult
 
@@ -61,7 +61,7 @@ class TestGetOrBuildPipeline:
             "src.pipeline.rag_pipeline.RAGPipeline.build",
             return_value=mock_pipeline,
         ):
-            result = _get_or_build_pipeline(_settings())
+            result = commands._get_or_build_pipeline(_settings())
         assert result is mock_pipeline
 
     def test_returns_cached_pipeline_on_second_call(
@@ -73,8 +73,8 @@ class TestGetOrBuildPipeline:
             "src.pipeline.rag_pipeline.RAGPipeline.build",
             return_value=mock_pipeline,
         ) as mock_build:
-            _get_or_build_pipeline(_settings())
-            _get_or_build_pipeline(_settings())
+            commands._get_or_build_pipeline(_settings())
+            commands._get_or_build_pipeline(_settings())
         mock_build.assert_called_once()
 
     def test_skips_build_when_pipeline_already_set(
@@ -83,7 +83,7 @@ class TestGetOrBuildPipeline:
         existing = MagicMock()
         monkeypatch.setattr(commands, "_pipeline", existing)
         with patch("src.pipeline.rag_pipeline.RAGPipeline.build") as mock_build:
-            result = _get_or_build_pipeline(_settings())
+            result = commands._get_or_build_pipeline(_settings())
         mock_build.assert_not_called()
         assert result is existing
 
@@ -96,7 +96,7 @@ class TestGetOrBuildPipeline:
             "src.pipeline.rag_pipeline.RAGPipeline.build",
             return_value=mock_pipeline,
         ):
-            _get_or_build_pipeline(_settings())
+            commands._get_or_build_pipeline(_settings())
         assert commands._pipeline is mock_pipeline
 
 
