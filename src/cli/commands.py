@@ -2,13 +2,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import httpx
+import typer
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import UnexpectedResponse
 
 from src.embeddings.bm25_embedder import BM25SparseEmbedder
-from src.pipeline.config import Settings
+from src.pipeline.config import Settings, get_settings
+from src.pipeline.ingest_pipeline import IngestionPipeline
+
+if TYPE_CHECKING:
+    from src.pipeline.rag_pipeline import RAGPipeline
 
 
 class OutputFormat(str, Enum):
@@ -187,3 +194,47 @@ def check_health(settings: Settings) -> HealthStatus:
         qdrant=_probe_qdrant(settings),
         llm=_probe_llm(settings),
     )
+
+
+# ---------------------------------------------------------------------------
+# Pipeline singleton — one RAGPipeline per process
+# ---------------------------------------------------------------------------
+
+_pipeline: RAGPipeline | None = None
+
+
+def _get_or_build_pipeline(settings: Settings) -> RAGPipeline:
+    """Return the cached pipeline, building it on first call."""
+    global _pipeline
+    if _pipeline is None:
+        from src.pipeline.rag_pipeline import RAGPipeline as _RAGPipeline
+
+        _pipeline = _RAGPipeline.build(settings)
+    return _pipeline
+
+
+# ---------------------------------------------------------------------------
+# Typer commands
+# ---------------------------------------------------------------------------
+
+
+def cmd_ingest(
+    source: Path = typer.Argument(..., help="Chemin vers le fichier JSON pré-chunké"),
+    reset: bool = typer.Option(
+        False, "--reset", help="Supprime et recrée la collection avant l'upsert"
+    ),
+    output: OutputFormat = typer.Option(OutputFormat.text, "--output", "-o"),
+) -> None:
+    """Indexe un fichier JSON dans Qdrant et persiste le modèle BM25."""
+    import src.cli.display as display  # lazy — display imports from commands
+
+    try:
+        with display.spinner("Ingesting documents…"):
+            result = IngestionPipeline.build(get_settings()).run(source, reset=reset)
+    except FileNotFoundError as e:
+        display.error(str(e))
+        raise typer.Exit(1)
+    except RuntimeError as e:
+        display.error(str(e))
+        raise typer.Exit(2)
+    display.show_ingest_result(result, output)

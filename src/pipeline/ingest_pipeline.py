@@ -9,6 +9,8 @@ from src.embeddings.bm25_embedder import BM25SparseEmbedder
 from src.embeddings.hybrid_embedder import HybridEmbedder
 from src.embeddings.sentence_transformer_embedder import SentenceTransformerEmbedder
 from src.ingestion.json_pipeline import JSONChunkIngestionPipeline
+from src.pipeline.config import Settings
+from src.vector_store.qdrant_store import QdrantVectorStore
 from src.vector_store.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
@@ -84,11 +86,35 @@ class IngestionPipeline:
         self._bm25_cache_dir = Path(bm25_cache_dir)
         self._alpha = alpha
 
-    def run(self, source: str | Path) -> IngestResult:
+    @classmethod
+    def build(cls, settings: Settings) -> IngestionPipeline:
+        """Wire all layers from *settings* and return a ready pipeline.
+
+        Args:
+            settings: Populated application settings instance.
+
+        Returns:
+            A configured :class:`IngestionPipeline` ready to call :meth:`run`.
+        """
+        return cls(
+            dense=SentenceTransformerEmbedder(model_name=settings.embedding_model),
+            sparse=BM25SparseEmbedder(),
+            vector_store=QdrantVectorStore(
+                host=settings.qdrant_host,
+                port=settings.qdrant_port,
+                collection_name=settings.collection_name,
+            ),
+            collection_name=settings.collection_name,
+            batch_size=settings.embedding_batch_size,
+            bm25_cache_dir=settings.bm25_cache_path.parent,
+        )
+
+    def run(self, source: str | Path, *, reset: bool = False) -> IngestResult:
         """Execute the full ingestion pipeline.
 
         Args:
             source: Path to a pre-chunked JSON file.
+            reset: If ``True``, drop and recreate the collection before upserting.
 
         Returns:
             :class:`IngestResult` with chunk counts and BM25 cache path.
@@ -120,6 +146,9 @@ class IngestionPipeline:
             alpha=self._alpha,
         )
 
+        if reset and self._vector_store.collection_exists():
+            self._vector_store.delete_collection()
+            logger.info("Deleted collection '%s' (reset=True)", self._collection_name)
         if not self._vector_store.collection_exists():
             self._vector_store.create_collection(dense_dim=embedder.dense_dim)
             logger.info(
