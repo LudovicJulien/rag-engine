@@ -263,3 +263,26 @@ def cmd_query(
         display.error(str(e))
         raise typer.Exit(2)
     display.show_rag_result(result, output)
+
+
+def cmd_up(
+    output: OutputFormat = typer.Option(OutputFormat.text, "--output", "-o"),
+) -> None:
+    """Initialise le pipeline RAG (charge BM25, dense model, connexion Qdrant).
+
+    Utile pour pré-chauffer avant une session de requêtes. Valide que tout
+    est opérationnel avant d'exposer le service.
+    """
+    import src.cli.display as display  # lazy — display imports from commands
+
+    settings = get_settings()
+    try:
+        with display.spinner("Building pipeline…"):
+            pipeline = _get_or_build_pipeline(settings)
+    except FileNotFoundError as e:
+        display.error(str(e) + " — Run: python -m src.cli ingest <source>")
+        raise typer.Exit(1)
+    except (ConnectionError, RuntimeError) as e:
+        display.error(str(e))
+        raise typer.Exit(2)
+    display.show_up_result(pipeline, settings, output)
