@@ -5,12 +5,13 @@ import json
 from dataclasses import FrozenInstanceError
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from src.embeddings.bm25_embedder import BM25SparseEmbedder
 from src.embeddings.sentence_transformer_embedder import SentenceTransformerEmbedder
+from src.pipeline.config import Settings
 from src.pipeline.ingest_pipeline import IngestionPipeline, IngestResult
 from src.vector_store.vector_store import UpsertResult, VectorStore
 
@@ -437,3 +438,132 @@ class TestIngestionPipelineLoadBM25:
 
         with pytest.raises(TypeError):
             IngestionPipeline.load_bm25(bad)
+
+
+def _make_settings(**overrides: object) -> Settings:
+    base: dict[str, object] = dict(
+        qdrant_host="localhost",
+        qdrant_port=6333,
+        collection_name="rag-test",
+        llm_provider="ollama",
+        llm_base_url="http://localhost:11434",
+        llm_api_key="",
+    )
+    base.update(overrides)
+    return Settings(**base)  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# IngestionPipeline.build
+# ---------------------------------------------------------------------------
+
+
+class TestIngestionPipelineBuild:
+    def test_returns_ingestion_pipeline_instance(self) -> None:
+        with (
+            patch("src.pipeline.ingest_pipeline.SentenceTransformerEmbedder"),
+            patch("src.pipeline.ingest_pipeline.QdrantVectorStore"),
+        ):
+            result = IngestionPipeline.build(_make_settings())
+        assert isinstance(result, IngestionPipeline)
+
+    def test_collection_name_matches_settings(self) -> None:
+        with (
+            patch("src.pipeline.ingest_pipeline.SentenceTransformerEmbedder"),
+            patch("src.pipeline.ingest_pipeline.QdrantVectorStore"),
+        ):
+            pipeline = IngestionPipeline.build(_make_settings(collection_name="my-col"))
+        assert pipeline._collection_name == "my-col"
+
+    def test_batch_size_matches_embedding_batch_size(self) -> None:
+        with (
+            patch("src.pipeline.ingest_pipeline.SentenceTransformerEmbedder"),
+            patch("src.pipeline.ingest_pipeline.QdrantVectorStore"),
+        ):
+            pipeline = IngestionPipeline.build(_make_settings(embedding_batch_size=64))
+        assert pipeline._batch_size == 64
+
+    def test_bm25_cache_dir_is_parent_of_cache_path(self, tmp_path: Path) -> None:
+        cache_path = tmp_path / "bm25" / "model.pkl"
+        with (
+            patch("src.pipeline.ingest_pipeline.SentenceTransformerEmbedder"),
+            patch("src.pipeline.ingest_pipeline.QdrantVectorStore"),
+        ):
+            pipeline = IngestionPipeline.build(
+                _make_settings(bm25_cache_path=cache_path)
+            )
+        assert pipeline._bm25_cache_dir == cache_path.parent
+
+    def test_qdrant_vector_store_created_with_correct_host(self) -> None:
+        with (
+            patch("src.pipeline.ingest_pipeline.SentenceTransformerEmbedder"),
+            patch("src.pipeline.ingest_pipeline.QdrantVectorStore") as mock_store_cls,
+        ):
+            IngestionPipeline.build(_make_settings(qdrant_host="qdrant.internal"))
+        call_kwargs = mock_store_cls.call_args.kwargs
+        assert call_kwargs["host"] == "qdrant.internal"
+
+    def test_qdrant_vector_store_created_with_correct_port(self) -> None:
+        with (
+            patch("src.pipeline.ingest_pipeline.SentenceTransformerEmbedder"),
+            patch("src.pipeline.ingest_pipeline.QdrantVectorStore") as mock_store_cls,
+        ):
+            IngestionPipeline.build(_make_settings(qdrant_port=9999))
+        call_kwargs = mock_store_cls.call_args.kwargs
+        assert call_kwargs["port"] == 9999
+
+    def test_dense_embedder_created_with_embedding_model(self) -> None:
+        with (
+            patch(
+                "src.pipeline.ingest_pipeline.SentenceTransformerEmbedder"
+            ) as mock_dense_cls,
+            patch("src.pipeline.ingest_pipeline.QdrantVectorStore"),
+        ):
+            IngestionPipeline.build(
+                _make_settings(embedding_model="intfloat/multilingual-e5-large")
+            )
+        mock_dense_cls.assert_called_once_with(
+            model_name="intfloat/multilingual-e5-large"
+        )
+
+
+# ---------------------------------------------------------------------------
+# IngestionPipeline.run — reset flag
+# ---------------------------------------------------------------------------
+
+
+class TestIngestionPipelineRunReset:
+    def test_reset_false_does_not_delete_when_collection_exists(
+        self, tmp_path: Path
+    ) -> None:
+        pipeline, store = _make_pipeline(tmp_path, store_exists=True)
+        src = _write_chunks_json(tmp_path / "chunks.json")
+        pipeline.run(src, reset=False)
+        store.delete_collection.assert_not_called()
+
+    def test_reset_true_deletes_existing_collection(self, tmp_path: Path) -> None:
+        pipeline, store = _make_pipeline(tmp_path, store_exists=True)
+        src = _write_chunks_json(tmp_path / "chunks.json")
+        pipeline.run(src, reset=True)
+        store.delete_collection.assert_called_once()
+
+    def test_reset_true_does_not_delete_when_collection_missing(
+        self, tmp_path: Path
+    ) -> None:
+        pipeline, store = _make_pipeline(tmp_path, store_exists=False)
+        src = _write_chunks_json(tmp_path / "chunks.json")
+        pipeline.run(src, reset=True)
+        store.delete_collection.assert_not_called()
+
+    def test_reset_true_creates_collection_after_delete(self, tmp_path: Path) -> None:
+        pipeline, store = _make_pipeline(tmp_path, store_exists=True)
+        store.collection_exists.side_effect = [True, False]
+        src = _write_chunks_json(tmp_path / "chunks.json")
+        pipeline.run(src, reset=True)
+        store.create_collection.assert_called_once()
+
+    def test_default_reset_is_false(self, tmp_path: Path) -> None:
+        pipeline, store = _make_pipeline(tmp_path, store_exists=True)
+        src = _write_chunks_json(tmp_path / "chunks.json")
+        pipeline.run(src)
+        store.delete_collection.assert_not_called()
