@@ -1,11 +1,20 @@
 from __future__ import annotations
 
+import re
+
 import pytest
 from typer.testing import CliRunner
 
 from src.cli.__main__ import app
 
 runner = CliRunner()
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+
+
+def _plain(text: str) -> str:
+    return _ANSI_RE.sub("", text)
+
 
 _ALL_COMMANDS = ["ingest", "query", "up", "health", "doctor", "config"]
 
@@ -80,28 +89,28 @@ class TestSubcommandHelp:
 class TestCommandOptions:
     def test_ingest_exposes_reset_flag(self) -> None:
         result = runner.invoke(app, ["ingest", "--help"])
-        assert "--reset" in result.output
+        assert "--reset" in _plain(result.output)
 
     def test_ingest_exposes_output_flag(self) -> None:
         result = runner.invoke(app, ["ingest", "--help"])
-        assert "--output" in result.output
+        assert "--output" in _plain(result.output)
 
     def test_query_exposes_top_k_flag(self) -> None:
         result = runner.invoke(app, ["query", "--help"])
-        assert "--top-k" in result.output
+        assert "--top-k" in _plain(result.output)
 
     def test_query_exposes_score_threshold_flag(self) -> None:
         result = runner.invoke(app, ["query", "--help"])
-        assert "--score-threshold" in result.output
+        assert "--score-threshold" in _plain(result.output)
 
     def test_health_exposes_output_flag(self) -> None:
         result = runner.invoke(app, ["health", "--help"])
-        assert "--output" in result.output
+        assert "--output" in _plain(result.output)
 
     def test_doctor_exposes_output_flag(self) -> None:
         result = runner.invoke(app, ["doctor", "--help"])
-        assert "--output" in result.output
+        assert "--output" in _plain(result.output)
 
     def test_config_exposes_output_flag(self) -> None:
         result = runner.invoke(app, ["config", "--help"])
-        assert "--output" in result.output
+        assert "--output" in _plain(result.output)
