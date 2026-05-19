@@ -286,3 +286,15 @@ def cmd_up(
         display.error(str(e))
         raise typer.Exit(2)
     display.show_up_result(pipeline, settings, output)
+
+
+def cmd_health(
+    output: OutputFormat = typer.Option(OutputFormat.text, "--output", "-o"),
+) -> None:
+    """Vérifie la connectivité réseau à Qdrant et au LLM (aucun I/O fichier)."""
+    import src.cli.display as display  # lazy — display imports from commands
+
+    status = check_health(get_settings())
+    display.show_health(status, output)
+    if not status.all_ok:
+        raise typer.Exit(2)
