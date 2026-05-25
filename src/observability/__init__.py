@@ -1,3 +1,3 @@
-from src.observability.tracer import PipelineTracer, TraceContext
+from src.observability.tracer import NoOpTracer, PipelineTracer, TraceContext
 
-__all__ = ["PipelineTracer", "TraceContext"]
+__all__ = ["NoOpTracer", "PipelineTracer", "TraceContext"]
