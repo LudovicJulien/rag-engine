@@ -43,6 +43,9 @@ dependencies = [
     # Evaluation
     "ragas>=0.1",
     "mlflow>=2.13",
+
+    # Observability
+    "langfuse>=2.0",
 ]
 
 [project.optional-dependencies]
