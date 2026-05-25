@@ -102,3 +102,34 @@ class Chunk:
     def is_last(self) -> bool:
         """Returns True if this is the last chunk of the parent document."""
         return self.chunk_index == self.total_chunks - 1
+
+
+@dataclass
+class Document:
+    """Raw document before splitting into chunks.
+
+    Attributes:
+        doc_id:   Unique identifier (e.g. MD5 hash of filename or content).
+        text:     Full text content of the document.
+        source:   Origin path or URI — propagated to chunk metadata.
+        metadata: Key/value pairs inherited by every Chunk derived from this document.
+    """
+
+    doc_id: str
+    text: str
+    source: str = ""
+    metadata: ChunkMetadata = field(default_factory=ChunkMetadata)
+
+    def __post_init__(self) -> None:
+        if not self.doc_id:
+            raise ValueError("Document doc_id cannot be empty")
+        if not self.text:
+            raise ValueError("Document text cannot be empty")
+
+    @property
+    def char_count(self) -> int:
+        return len(self.text)
+
+    @property
+    def word_count(self) -> int:
+        return len(self.text.split())
