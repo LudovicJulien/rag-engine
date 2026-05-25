@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from src.observability.tracer import PipelineTracer, TraceContext
+from src.observability.tracer import NoOpTracer, PipelineTracer, TraceContext
 
 # ---------------------------------------------------------------------------
 # Minimal concrete tracer used only in ABC contract tests
@@ -192,3 +192,105 @@ class TestPipelineTracerABC:
 
         _MetaCapture().start_trace("t", query="q", metadata={"top_k": 5})
         assert _MetaCapture.captured_metadata == {"top_k": 5}
+
+
+# ---------------------------------------------------------------------------
+# NoOpTracer
+# ---------------------------------------------------------------------------
+
+
+class TestNoOpTracer:
+    def test_is_pipeline_tracer(self) -> None:
+        assert isinstance(NoOpTracer(), PipelineTracer)
+
+    def test_start_trace_returns_trace_context(self) -> None:
+        ctx = NoOpTracer().start_trace("rag_query", query="quel document ?")
+        assert isinstance(ctx, TraceContext)
+
+    def test_start_trace_trace_id_is_empty_string(self) -> None:
+        # "" is the sentinel that tells RAGPipeline to set trace_id=None in RAGResult
+        ctx = NoOpTracer().start_trace("t", query="q")
+        assert ctx.trace_id == ""
+
+    def test_start_trace_accepts_metadata(self) -> None:
+        ctx = NoOpTracer().start_trace("t", query="q", metadata={"top_k": 5})
+        assert isinstance(ctx, TraceContext)
+
+    def test_start_trace_accepts_none_metadata(self) -> None:
+        ctx = NoOpTracer().start_trace("t", query="q", metadata=None)
+        assert isinstance(ctx, TraceContext)
+
+    def test_start_span_returns_empty_string(self) -> None:
+        tracer = NoOpTracer()
+        ctx = tracer.start_trace("t", query="q")
+        span_id = tracer.start_span(ctx, "embedding", span_input={"query": "q"})
+        assert span_id == ""
+
+    def test_start_span_returns_str_type(self) -> None:
+        tracer = NoOpTracer()
+        ctx = tracer.start_trace("t", query="q")
+        assert isinstance(tracer.start_span(ctx, "s", span_input={}), str)
+
+    def test_end_span_is_noop(self) -> None:
+        tracer = NoOpTracer()
+        ctx = tracer.start_trace("t", query="q")
+        tracer.end_span(ctx, "", output={})
+
+    def test_end_span_accepts_latency_ms(self) -> None:
+        tracer = NoOpTracer()
+        ctx = tracer.start_trace("t", query="q")
+        tracer.end_span(ctx, "", output={"chunks_retrieved": 3}, latency_ms=12)
+
+    def test_record_generation_is_noop(self) -> None:
+        tracer = NoOpTracer()
+        ctx = tracer.start_trace("t", query="q")
+        tracer.record_generation(
+            ctx, model="llama3", prompt_tokens=100, completion_tokens=50
+        )
+
+    def test_record_generation_accepts_none_tokens(self) -> None:
+        tracer = NoOpTracer()
+        ctx = tracer.start_trace("t", query="q")
+        tracer.record_generation(
+            ctx, model="llama3", prompt_tokens=None, completion_tokens=None
+        )
+
+    def test_score_is_noop(self) -> None:
+        tracer = NoOpTracer()
+        ctx = tracer.start_trace("t", query="q")
+        tracer.score(ctx, "faithfulness", 0.87)
+
+    def test_end_trace_is_noop(self) -> None:
+        tracer = NoOpTracer()
+        ctx = tracer.start_trace("t", query="q")
+        tracer.end_trace(ctx, output="réponse finale")
+
+    def test_end_trace_accepts_latency_ms(self) -> None:
+        tracer = NoOpTracer()
+        ctx = tracer.start_trace("t", query="q")
+        tracer.end_trace(ctx, output="ans", latency_ms=350)
+
+    def test_full_rag_sequence_no_exception(self) -> None:
+        tracer = NoOpTracer()
+        ctx = tracer.start_trace("rag_query", query="qui a fondé Montréal ?")
+        sid_emb = tracer.start_span(ctx, "embedding", span_input={"query": "q"})
+        tracer.end_span(ctx, sid_emb, output={"dim": 1024}, latency_ms=8)
+        sid_ret = tracer.start_span(ctx, "retrieval", span_input={"top_k": 5})
+        tracer.end_span(ctx, sid_ret, output={"chunks_retrieved": 5}, latency_ms=23)
+        tracer.record_generation(
+            ctx,
+            model="llama3",
+            prompt_tokens=512,
+            completion_tokens=128,
+            latency_ms=410,
+        )
+        tracer.score(ctx, "faithfulness", 0.91)
+        tracer.score(ctx, "answer_relevancy", 0.88)
+        tracer.end_trace(ctx, output="Maisonneuve en 1642.", latency_ms=441)
+
+    def test_multiple_concurrent_traces_are_independent(self) -> None:
+        tracer = NoOpTracer()
+        ctx1 = tracer.start_trace("t1", query="q1")
+        ctx2 = tracer.start_trace("t2", query="q2")
+        tracer.end_trace(ctx1, output="ans1")
+        tracer.end_trace(ctx2, output="ans2")
