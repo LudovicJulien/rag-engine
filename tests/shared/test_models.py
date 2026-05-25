@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from src.shared.models import Chunk, ChunkMetadata, MetadataFilter
+from src.shared.models import Chunk, ChunkMetadata, Document, MetadataFilter
 
 
 def _make_chunk(**kwargs: Any) -> Chunk:
@@ -192,3 +192,86 @@ class TestChunkProperties:
         chunk = _make_chunk(chunk_index=0, total_chunks=1)
         assert chunk.is_first is True
         assert chunk.is_last is True
+
+
+# ---------------------------------------------------------------------------
+# Document
+# ---------------------------------------------------------------------------
+
+
+def _make_document(**kwargs: Any) -> Document:
+    """Factory for Document with sensible defaults; override any field via kwargs."""
+    defaults: dict[str, Any] = {
+        "doc_id": "doc-001",
+        "text": "Hello world",
+    }
+    defaults.update(kwargs)
+    return Document(**defaults)
+
+
+class TestDocumentCreation:
+    """Tests for valid Document instantiation."""
+
+    def test_minimal_document(self) -> None:
+        """Document creates successfully with only doc_id and text."""
+        doc = _make_document()
+        assert doc.doc_id == "doc-001"
+        assert doc.text == "Hello world"
+
+    def test_default_source_is_empty_string(self) -> None:
+        doc = _make_document()
+        assert doc.source == ""
+
+    def test_default_metadata_is_empty_chunk_metadata(self) -> None:
+        doc = _make_document()
+        assert isinstance(doc.metadata, ChunkMetadata)
+        assert doc.metadata.metadata == {}
+
+    def test_custom_source(self) -> None:
+        doc = _make_document(source="/data/notice.md")
+        assert doc.source == "/data/notice.md"
+
+    def test_custom_metadata(self) -> None:
+        meta = ChunkMetadata(metadata={"language": "fr"})
+        doc = _make_document(metadata=meta)
+        assert doc.metadata.get("language") == "fr"
+
+    def test_metadata_not_shared_between_instances(self) -> None:
+        """Each Document instance has its own independent metadata dict."""
+        doc1 = _make_document()
+        doc2 = _make_document()
+        doc1.metadata.metadata["key"] = "value"
+        assert doc2.metadata.metadata == {}
+
+
+class TestDocumentValidation:
+    """Tests for Document validation in __post_init__."""
+
+    def test_empty_doc_id_raises(self) -> None:
+        with pytest.raises(ValueError, match="doc_id cannot be empty"):
+            _make_document(doc_id="")
+
+    def test_empty_text_raises(self) -> None:
+        with pytest.raises(ValueError, match="text cannot be empty"):
+            _make_document(text="")
+
+
+class TestDocumentProperties:
+    """Tests for Document computed properties."""
+
+    def test_char_count(self) -> None:
+        doc = _make_document(text="Hello")
+        assert doc.char_count == 5
+
+    def test_word_count(self) -> None:
+        doc = _make_document(text="Hello world foo")
+        assert doc.word_count == 3
+
+    def test_char_count_empty_source_not_counted(self) -> None:
+        """char_count reflects only text, not source or other fields."""
+        doc = _make_document(text="Hi", source="some/very/long/path.txt")
+        assert doc.char_count == 2
+
+    def test_word_count_single_word(self) -> None:
+        doc = _make_document(text="unique")
+        assert doc.word_count == 1

@@ -396,6 +396,90 @@ class TestBM25CachePathFromEnv:
 
 
 # ---------------------------------------------------------------------------
+# Chunker fields
+# ---------------------------------------------------------------------------
+
+
+class TestChunkerSettingsTypes:
+    def test_chunker_chunk_size_is_int(self) -> None:
+        assert isinstance(Settings().chunker_chunk_size, int)
+
+    def test_chunker_chunk_overlap_is_int(self) -> None:
+        assert isinstance(Settings().chunker_chunk_overlap, int)
+
+    def test_chunker_min_chunk_size_is_int(self) -> None:
+        assert isinstance(Settings().chunker_min_chunk_size, int)
+
+
+class TestChunkerSettingsDefaults:
+    def test_default_chunk_size(self) -> None:
+        assert Settings().chunker_chunk_size == 512
+
+    def test_default_chunk_overlap(self) -> None:
+        assert Settings().chunker_chunk_overlap == 64
+
+    def test_default_min_chunk_size(self) -> None:
+        assert Settings().chunker_min_chunk_size == 32
+
+    def test_default_overlap_is_less_than_default_chunk_size(self) -> None:
+        s = Settings()
+        assert s.chunker_chunk_overlap < s.chunker_chunk_size
+
+
+class TestChunkerSettingsInvariants:
+    def test_chunk_size_is_at_least_one(self) -> None:
+        assert Settings().chunker_chunk_size >= 1
+
+    def test_chunk_overlap_is_non_negative(self) -> None:
+        assert Settings().chunker_chunk_overlap >= 0
+
+    def test_min_chunk_size_is_non_negative(self) -> None:
+        assert Settings().chunker_min_chunk_size >= 0
+
+
+class TestChunkerSettingsFromEnv:
+    def test_chunk_size_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("CHUNKER_CHUNK_SIZE", "1024")
+        assert Settings().chunker_chunk_size == 1024
+
+    def test_chunk_overlap_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("CHUNKER_CHUNK_OVERLAP", "128")
+        assert Settings().chunker_chunk_overlap == 128
+
+    def test_min_chunk_size_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("CHUNKER_MIN_CHUNK_SIZE", "10")
+        assert Settings().chunker_min_chunk_size == 10
+
+
+class TestChunkerSettingsValidation:
+    def test_chunk_size_zero_rejected(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("CHUNKER_CHUNK_SIZE", "0")
+        with pytest.raises(ValidationError):
+            Settings()
+
+    def test_chunk_size_negative_rejected(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("CHUNKER_CHUNK_SIZE", "-1")
+        with pytest.raises(ValidationError):
+            Settings()
+
+    def test_chunk_overlap_negative_rejected(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("CHUNKER_CHUNK_OVERLAP", "-1")
+        with pytest.raises(ValidationError):
+            Settings()
+
+    def test_min_chunk_size_negative_rejected(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("CHUNKER_MIN_CHUNK_SIZE", "-1")
+        with pytest.raises(ValidationError):
+            Settings()
+
+
+# ---------------------------------------------------------------------------
 # get_settings
 # ---------------------------------------------------------------------------
 
