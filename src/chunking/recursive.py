@@ -28,12 +28,41 @@ class RecursiveTextChunker(TextChunker):
     def chunk(self, document: Document) -> list[Chunk]:
         raise NotImplementedError(
             "chunk() is completed in a later commit — "
-            "use _split_recursive() directly for now."
+            "use _split_recursive() and _apply_overlap() directly for now."
         )
 
     # ------------------------------------------------------------------
     # Internal algorithm
     # ------------------------------------------------------------------
+
+    def _apply_overlap(self, texts: list[str]) -> list[str]:
+        """Prefix each chunk (except the first) with the tail of its predecessor.
+
+        Takes the last ``chunk_overlap`` characters of result[N] and prepends
+        them to texts[N+1]. The suffix is taken from the *already-overlapped*
+        result rather than the original input, so very short intermediate
+        fragments propagate their full content forward naturally.
+
+        Args:
+            texts: Ordered list of fragments produced by _split_recursive.
+                   May be empty or contain a single element.
+
+        Returns:
+            New list of the same length as *texts*.
+            result[0] is identical to texts[0].
+            result[i] == result[i-1][-chunk_overlap:] + texts[i]  for i >= 1.
+            Returns the original list unchanged when chunk_overlap == 0 or
+            len(texts) <= 1 (no allocation in the common no-overlap path).
+        """
+        overlap = self._config.chunk_overlap
+        if overlap == 0 or len(texts) <= 1:
+            return texts
+
+        result: list[str] = [texts[0]]
+        for i in range(1, len(texts)):
+            suffix = result[i - 1][-overlap:]
+            result.append(suffix + texts[i])
+        return result
 
     def _split_recursive(self, text: str, separators: list[str]) -> list[str]:
         """Split *text* into fragments all <= chunk_size.
