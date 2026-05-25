@@ -88,6 +88,20 @@ class Settings(BaseSettings):
         description="Minimum similarity threshold",
     )
 
+    # ── Chunker ───────────────────────────────────────────────────────────────
+    chunker_chunk_size: int = Field(
+        default=512,
+        description="Target chunk length in characters for RecursiveTextChunker",
+    )
+    chunker_chunk_overlap: int = Field(
+        default=64,
+        description="Characters from tail of chunk N prepended to chunk N+1",
+    )
+    chunker_min_chunk_size: int = Field(
+        default=32,
+        description="Fragments shorter than this are discarded after splitting",
+    )
+
     # ── BM25 Cache ────────────────────────────────────────────────────────────
     bm25_cache_path: Path = Field(
         default=Path("~/.cache/rag/bm25.pkl"),
@@ -101,6 +115,27 @@ class Settings(BaseSettings):
     )
 
     # ── Validators ────────────────────────────────────────────────────────────
+    @field_validator("chunker_chunk_size")
+    @classmethod
+    def validate_chunker_chunk_size(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError(f"chunker_chunk_size must be >= 1, got {v}")
+        return v
+
+    @field_validator("chunker_chunk_overlap")
+    @classmethod
+    def validate_chunker_chunk_overlap(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError(f"chunker_chunk_overlap must be >= 0, got {v}")
+        return v
+
+    @field_validator("chunker_min_chunk_size")
+    @classmethod
+    def validate_chunker_min_chunk_size(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError(f"chunker_min_chunk_size must be >= 0, got {v}")
+        return v
+
     @field_validator("bm25_cache_path")
     @classmethod
     def expand_bm25_cache_path(cls, v: Path) -> Path:
