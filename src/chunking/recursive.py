@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+
 from src.chunking.chunker import ChunkConfig, TextChunker
 from src.shared.models import Chunk, Document
 
@@ -7,15 +9,15 @@ from src.shared.models import Chunk, Document
 class RecursiveTextChunker(TextChunker):
     """Splits text using a hierarchy of separators, from broadest to finest.
 
+    Pipeline: _split_recursive → _apply_overlap → strip+filter → Chunk objects.
+
     For a given text, tries separators[0]. Fragments that still exceed
     chunk_size are recursed with separators[1:]. The empty string ``""``
     at the end of the default separator list is the absolute fallback:
-    it splits character by character and guarantees every fragment is
-    <= chunk_size.
-
-    Fragments accumulated via _split_recursive are then overlapped in
-    _apply_overlap and assembled into Chunk objects in chunk(). Those two
-    methods are added in the following commits.
+    it splits character by character and guarantees every fragment fits
+    within chunk_size. Overlap is then prepended to each fragment from
+    the tail of its predecessor so that content spanning boundaries is
+    always represented in at least one chunk.
     """
 
     def __init__(self, config: ChunkConfig | None = None) -> None:
@@ -26,10 +28,55 @@ class RecursiveTextChunker(TextChunker):
         return self._config
 
     def chunk(self, document: Document) -> list[Chunk]:
-        raise NotImplementedError(
-            "chunk() is completed in a later commit — "
-            "use _split_recursive() and _apply_overlap() directly for now."
-        )
+        """Split a document into Chunks via the full recursive pipeline.
+
+        Steps:
+            1. _split_recursive  — hierarchical separator descent
+            2. _apply_overlap    — prefix each fragment with tail of previous
+            3. strip + filter    — discard whitespace-only and sub-threshold fragments
+            4. build Chunks      — assign deterministic IDs, indices, metadata
+
+        Args:
+            document: Raw document to split.
+
+        Returns:
+            Non-empty ordered list of Chunk objects.
+
+        Raises:
+            ValueError: If all fragments are below min_chunk_size after filtering.
+        """
+        texts = self._split_recursive(document.text, list(self._config.separators))
+        texts = self._apply_overlap(texts)
+        texts = [
+            stripped
+            for t in texts
+            if len(stripped := t.strip()) >= self._config.min_chunk_size
+        ]
+
+        if not texts:
+            raise ValueError(
+                f"Document '{document.doc_id}' produced no chunks "
+                f"(all fragments < min_chunk_size={self._config.min_chunk_size})"
+            )
+
+        total = len(texts)
+        return [
+            Chunk(
+                chunk_id=self._make_chunk_id(document.doc_id, i, text),
+                parent_doc_id=document.doc_id,
+                text=text,
+                chunk_index=i,
+                total_chunks=total,
+                metadata=document.metadata,
+            )
+            for i, text in enumerate(texts)
+        ]
+
+    @staticmethod
+    def _make_chunk_id(doc_id: str, index: int, text: str) -> str:
+        """Generate a deterministic chunk ID from document ID, position, and content."""
+        h = hashlib.md5(f"{doc_id}:{index}:{text}".encode()).hexdigest()[:12]
+        return f"{doc_id}__chunk_{index:04d}_{h}"
 
     # ------------------------------------------------------------------
     # Internal algorithm
